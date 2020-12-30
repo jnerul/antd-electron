@@ -6,7 +6,8 @@
   "scripts": {
     "start": "electron .",
     "pack": "electron-packager . ZPertElectron --platform=win32 --arch=x64 --out=./out --asar --icon=./src/resource/icon --app-version=0.0.1 --overwrite --ignore=node_modules",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "webpack": "webpack"
   },
   "author": "",
   "license": "ISC",
