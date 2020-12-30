@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- <script src="browser.min.js"></script> -->
+    <!-- <script type="text/javascript" src ="https://cdn.polyfill.io/v2/polyfill.min.js?features=es6"></script> -->
+    <script
+        src="https://polyfill.zplan.cc/v3/polyfill.js?features=default,es5,Element.prototype.closest,Array.prototype.find,String.prototype.repeat,Object.entries,Object.values,Math.imul,Math.fround,Math.clz32&flags=gated">
+    </script>
+    <script src="https://cdn.bootcss.com/vConsole/3.3.4/vconsole.min.js"></script>
+    <script>
+        // var vConsole = new VConsole();
+        // console.log('hello vconsole');
+    </script>
+    <!-- <script src="js/zpert.asm.js"></script> -->
+    <!-- <script src="js/renderp.js"></script> -->
+
+
+    <!-- <script src="js/zpert.js"></script> -->
+    <link rel="stylesheet" href="css/theme/default/layer.css" type="text/css">
+    <link rel="stylesheet" href="css/theme/default/laydate.css" type="text/css">
+    <link rel="stylesheet" href="css/tree/zTreeStyle.css" type="text/css">
+    <link rel="stylesheet" href="css/zcontrol.css" type="text/css">
+</head>
+
+<body style="margin:0px;padding:0px">
+    <div style="text-align:left;padding-top:10px" id="app_menu">
+        <div id="zpert_menu"></div>
+    </div>
+    <div style="text-align:center;margin: 0px;padding: 0px;float:left;" id="canvasdiv1">
+        <div style="text-align:center;margin: 3px;padding: 5px;float:left;position:relative;" id="canvasdiv">
+            <canvas id=zweb_view width=200 height=200></canvas>
+            <!-- <button id='resize_canvas'>＋</button> -->
+        </div>
+    </div>
+
+
+    <script src="js/wrender.js"></script>
+    <link rel="stylesheet" href="css/app.css" type="text/css">
+    <link rel="stylesheet" href="css/antd_custom.css" type="text/css">
+
+
+    <script>
+        // console.log(document.documentElement.clientWidth, document.documentElement.clientHeight);
+        document.getElementById('zweb_view').width = document.documentElement.clientWidth - 20;
+        document.getElementById('zweb_view').height = document.documentElement.clientHeight - 50;
+
+
+        // document.getElementById('jstype').innerText = "wasm"
+
+
+        function full(element) {
+            var ele = element;
+            if (!document.fullscreenElement && // alternative standard method
+                !document.mozFullScreenElement && !document.webkitFullscreenElement) { // current working methods
+                if (element.requestFullscreen) {
+                    element.requestFullscreen();
+                } else if (element.mozRequestFullScreen) {
+                    element.mozRequestFullScreen();
+                } else if (element.webkitRequestFullscreen) {
+                    element.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+                }
+            } else {
+                if (document.cancelFullScreen) {
+                    document.cancelFullScreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExiFullscreen();
+                } else if (document.webkitCancelFullScreen) {
+                    document.webkitCancelFullScreen();
+                }
+            }
+        }
+        // document.getElementById('full_screen').addEventListener('click', function (e) {
+        //     document.body.style.backgroundColor = "#FFFFFF";
+        //     full(document.body);
+        // });
+    </script>
+    <script>
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,92 @@
+.ant-dropdown-menu-item:hover,
+.ant-dropdown-menu-submenu-title:hover {
+    color: rgba(0, 0, 0, .85);
+}
+
+.menu_icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: -0.35em;
+    fill: #5c5c5c;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.ant-tooltip-inner {
+    color: gray
+}
+
+.ant-divider-vertical {
+    height: 1em;
+}
+
+.antd-my-btn {
+    padding: 4px;
+    outline: 0;
+    line-height: 1.5715;
+    position: relative;
+    display: inline-block;
+    font-weight: 400;
+    white-space: nowrap;
+    text-align: center;
+    background-image: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    user-select: none;
+    height: 32px;
+    font-size: 14px;
+    border-radius: 1px;
+    color: rgba(0, 0, 0, 0.85);
+}
+
+.ant-btn-text:focus,
+.antd-my-btn:focus {
+    background: transparent;
+}
+
+.ant-btn-text:hover,
+.antd-my-btn:hover {
+    background: rgba(0, 0, 0, .02);
+}
+
+.ant-btn-text:active,
+.antd-my-btn:active {
+    background: rgba(0, 0, 0, .04);
+}
+
+.ant-modal-header {
+    border-bottom: none;
+}
+
+.ant-modal-footer {
+    border-top: none;
+}
+
+.ant-modal-body {
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+.ant-form-item {
+    margin-bottom: 10px;
+}
+
+.ant-form-vertical .ant-form-item-label {
+    padding-bottom: 0px;
+}
+
+.ant-form-inline .ant-form-item {
+    margin-bottom: 24px;
+}
+
+.ant-form-inline .ant-form-item-with-help {
+    margin-bottom: 0;
+}
+
+.table_time_range_picker .ant-picker-range-separator {
+    padding: 0 3px;
+}
+
+/* .ant-table-thead>tr>th {
+    padding: 0px;
+} */
