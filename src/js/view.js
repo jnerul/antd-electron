@@ -2,7 +2,7 @@
 
 var exports = {}
 
-var pro = require("./data");
+// var pro = require("./data");
 var webinit = require('./zpert/a').ZWebViewInit;
 
 // import React from "react";
@@ -43,6 +43,24 @@ function initwasm(module) {
     function setUpdateMenu(fun) { update_menu = fun; };
     exports.setMessageBox = setMessageBox;
     exports.setUpdateMenu = setUpdateMenu;
+
+
+    function saveZpertFile(filepath) {
+        var fs = require("fs");
+        fs.writeFile(filepath, view.ToJson(), { encoding: 'utf8' }, function (err) {
+            if (err)
+                throw err;
+            console.log('保存成功');
+        })
+    }
+
+    function get_view() {
+        return view;
+    }
+
+    exports.saveFile = saveZpertFile;
+    exports.getView = get_view;
+
     ZWebViewInit({
         locateFile: function (file) {
             // console.log(__dirname);
@@ -95,37 +113,39 @@ function initwasm(module) {
             }
         },
         createSettingDialog: module.createSettingDialog,
+        writeToClipBoard: function (json, data) {
+            if (module.writeToClipBoard) {
+                module.writeToClipBoard(json, data);
+            }
+        },
     }).then(function (Module) {
         // sendtocoeditclient = Module['sendtocoeditclient'];
         autosizeCanvas();
+
+
         function opendata(data) {
             view = Module.load(data, 3);
             view.SetReadOnly(false);
-            // document.getElementById('readonly').style.background = "#e0e0e0";
             is_read_only = false;
-            // view.ResDbFromJSON(JSON.stringify(resdb));
             view.Draw();
+            return view;
         }
 
         function openZpertFile(filepath) {
             var fs = require("fs");
-            fs.readFile(filepath, "utf8", (err, data) => {
-                if (err) {
-                    console.log('打开失败');
-                } else {
-                    opendata(data);
-                }
-            })
+            return new Promise(function (resolve, reject) {
+                fs.readFile(filepath, "utf8", (err, data) => {
+                    if (err) {
+                        console.log('打开失败');
+                    } else {
+                        console.log('打开成功');
+                        opendata(data);
+                        resolve();
+                    }
+                })
+            });
         }
 
-        function saveZpertFile(filepath) {
-            var fs = require("fs");
-            fs.writeFile(filepath, view.ToJson(), { encoding: 'utf8' }, function (err) {
-                if (err)
-                    throw err;
-                console.log('保存成功');
-            })
-        }
 
         function newZpertFile() {
             var doc = new Module.ZWebDoc();
@@ -144,128 +164,10 @@ function initwasm(module) {
             view = zwebview;
         }
 
-        function get_view() {
-            return view;
+        function onClose() {
+            Module.onclose();
+            view = undefined;
         }
-
-        console.log(__dirname);
-        console.log(pro);
-        opendata(JSON.stringify(pro.pro()));
-
-        document.onkeydown = function (event) {
-            var e = event || window.event || arguments.callee.caller.arguments[0];
-            console.log('keydown', e.keyCode);
-            if (e) {
-                view.OnMessage(Module.ZWM_KEYDOWN, e.keyCode, 0, 0, 0);
-            }
-        }
-        document.onkeyup = function (event) {
-            var e = event || window.event || arguments.callee.caller.arguments[0];
-            console.log('keyup', e.keyCode);
-            if (e) {
-                view.OnMessage(Module.ZWM_KEYUP, e.keyCode, 0, 0, 0);
-            }
-        }
-
-        function dbclick(event) {
-            console.log('dbclick');
-        }
-        document.addEventListener('ondblclick', function (e) {
-            dbclick(e);
-        });
-
-        function drap(obj) {
-            function start(event) {
-                // 鼠标左键
-                if (event.button == 0) {
-                    var rect = document.getElementById("zweb_view").getBoundingClientRect();
-                    var parent = document.getElementById("zweb_view").parentElement.parentElement;
-                    // console.log(event.pageX - rect.left - window.pageXOffset, event.pageY - rect.top - window.pageYOffset);
-                    view.OnMessage(Module.ZWM_LBUTTONDOWN, event.pageX - rect.left - window.pageXOffset,
-                        event.pageY - rect.top - window.pageYOffset, 0, 0);
-                    // 绑定事件，同样unbind解绑定，此效果的实现最后必须要解绑定，否则鼠标松开后拖拽效果依然存在
-                    //movemove事件必须绑定到$(document)上，鼠标移动是在整个屏幕上的
-                    document.addEventListener('mousemove', move);
-                    //此处的$(document)可以改为obj
-                    document.addEventListener('mouseup', stop);
-                    // window.open('tree.html')
-                }
-                return false; //阻止默认事件或冒泡
-            }
-
-            function move(event) {
-                var rect = document.getElementById("zweb_view").getBoundingClientRect();
-                var parent = document.getElementById("zweb_view").parentElement.parentElement;
-                view.OnMessage(Module.ZWM_MOUSEMOVE, event.pageX - rect.left - window.pageXOffset, event
-                    .pageY - rect.top - window.pageYOffset, 0, 0);
-                return false; //阻止默认事件或冒泡
-            }
-
-            function stop(event) {
-                // console.log('lup');
-                var rect = document.getElementById("zweb_view").getBoundingClientRect();
-                var parent = document.getElementById("zweb_view").parentElement.parentElement;
-                view.OnMessage(Module.ZWM_LBUTTONUP, event.pageX - rect.left - window.pageXOffset, event
-                    .pageY - rect.top - window.pageYOffset, 0, 0);
-            }
-
-            obj.addEventListener('mousedown', start);
-            obj.addEventListener('mousemove', move);
-            obj.addEventListener('mouseup', stop);
-
-            obj.oncontextmenu = function (event) {
-                var rect = document.getElementById("zweb_view").getBoundingClientRect();
-                view.OnMessage(Module.ZWM_RBUTTONDOWN, event.pageX - rect.left - window.pageXOffset,
-                    event.pageY - rect.top - window.pageYOffset, 0, 0);
-                view.OnMessage(Module.ZWM_RBUTTONUP, event.pageX - rect.left - window.pageXOffset,
-                    event.pageY - rect.top - window.pageYOffset, 0, 0);
-                event.preventDefault();
-            };
-
-            obj.addEventListener('dblclick', function (event) {
-                var rect = document.getElementById("zweb_view").getBoundingClientRect();
-                view.OnMessage(Module.ZWM_LBUTTONDBLCLK, event.pageX - rect.left - window.pageXOffset,
-                    event.pageY - rect.top - window.pageYOffset, 0, 0);
-            });
-
-            function onTouchStart(event) {
-                event.preventDefault();
-                var offsetX = event.pageX;
-                var offsetY = event.pageY;
-                var touch = event.touches[0];
-                var rect = document.getElementById("zweb_view").getBoundingClientRect();
-                var parent = document.getElementById("zweb_view").parentElement.parentElement;
-                // console.log('touchstart', touch.pageX - rect.left - window.pageXOffset,
-                // touch.pageY - rect.top - window.pageYOffset);
-                view.OnMessage(Module.ZWM_LBUTTONDOWN, touch.pageX - rect.left - window.pageXOffset,
-                    touch.pageY - rect.top - window.pageYOffset, 0, 0);
-            }
-
-            function onTouchMove(event) {
-                event.preventDefault();
-                // console.log('touchmove');
-                var touch = event.touches[0];
-                var rect = document.getElementById("zweb_view").getBoundingClientRect();
-                var parent = document.getElementById("zweb_view").parentElement.parentElement;
-                view.OnMessage(Module.ZWM_MOUSEMOVE, touch.pageX - rect.left - window.pageXOffset, touch
-                    .pageY - rect.top - window.pageYOffset, 0, 0);
-                return false; //阻止默认事件或冒泡
-            }
-
-            function onTouchend(event) {
-                event.preventDefault();
-                // console.log('touchend');
-                var touch = event.touches[0];
-                var rect = document.getElementById("zweb_view").getBoundingClientRect();
-                var parent = document.getElementById("zweb_view").parentElement.parentElement;
-                view.OnMessage(Module.ZWM_LBUTTONUP, 0, 0, 0, 0);
-            }
-            obj.addEventListener('touchstart', onTouchStart, false);
-            obj.addEventListener('touchmove', onTouchMove, false);
-            obj.addEventListener('touchend', onTouchend, false);
-        }
-        var obj = document.getElementById('zweb_view');
-        drap(obj);
 
         function expandTo(grade) {
             if (grade == "层级1") {
@@ -310,36 +212,170 @@ function initwasm(module) {
         function onCollapsed() {
             view.OnCollapsed(Module.ID_BUTTON_EXPAND);
         }
-
+        function onCopy() {
+            view.OnCopy();
+        }
+        function onPaste(str) {
+            view.OnPaste(str);
+        }
+        console.log('init openFile');
         exports.openFile = openZpertFile;
-        exports.saveFile = saveZpertFile;
         exports.newFile = newZpertFile;
+        exports.onClose = onClose;
         exports.expandTo = expandTo;
         exports.changePertMode = changePertMode;
         exports.addWork = addWork;
         exports.addMilestone = addMilestone;
         exports.onCollapsed = onCollapsed;
-        exports.getView = get_view;
+        exports.onCopy = onCopy;
+        exports.onPaste = onPaste;
 
-        document.getElementById('zweb_view').addEventListener('mousewheel', function (e) {
-            var direct = 0;
-            e = e || window.event;
-            if (e.wheelDelta) { //IE/Opera/Chrome
-                direct = e.wheelDelta / 120;
-            } else if (e.detail) { //Firefox
-                direct = -e.wheelDelta / 3;
+
+        document.onkeydown = function (event) {
+            var e = event || window.event || arguments.callee.caller.arguments[0];
+            console.log('keydown', e.keyCode);
+            if (e) {
+                view.OnMessage(Module.ZWM_KEYDOWN, e.keyCode, 0, 0, 0);
             }
-            var rect = document.getElementById("zweb_view").getBoundingClientRect()
-            var parent = document.getElementById("zweb_view").parentElement.parentElement;
-            var offsetX = event.pageX - rect.x - window.pageXOffset;
-            var offsetY = event.pageY - rect.y - window.pageYOffset;
-            if (direct > 0)
-                direct = 2;
-            else
-                direct = 0.5;
-            view.OnMessage(Module.ZWM_MOUSEWHEEL, offsetX, offsetY, direct, 0);
-            return false;
+        }
+        document.onkeyup = function (event) {
+            var e = event || window.event || arguments.callee.caller.arguments[0];
+            console.log('keyup', e.keyCode);
+            if (e) {
+                view.OnMessage(Module.ZWM_KEYUP, e.keyCode, 0, 0, 0);
+            }
+        }
+
+        function dbclick(event) {
+            console.log('dbclick');
+        }
+        document.addEventListener('ondblclick', function (e) {
+            dbclick(e);
         });
+
+        function drap(obj) {
+            function start(event) {
+                // 鼠标左键
+                if (event.button == 0 && view) {
+                    var rect = document.getElementById("zweb_view").getBoundingClientRect();
+                    var parent = document.getElementById("zweb_view").parentElement.parentElement;
+                    // console.log(event.pageX - rect.left - window.pageXOffset, event.pageY - rect.top - window.pageYOffset);
+                    view.OnMessage(Module.ZWM_LBUTTONDOWN, event.pageX - rect.left - window.pageXOffset,
+                        event.pageY - rect.top - window.pageYOffset, 0, 0);
+                    // 绑定事件，同样unbind解绑定，此效果的实现最后必须要解绑定，否则鼠标松开后拖拽效果依然存在
+                    //movemove事件必须绑定到$(document)上，鼠标移动是在整个屏幕上的
+                    document.addEventListener('mousemove', move);
+                    //此处的$(document)可以改为obj
+                    document.addEventListener('mouseup', stop);
+                    // window.open('tree.html')
+                }
+                return false; //阻止默认事件或冒泡
+            }
+
+            function move(event) {
+                if (view) {
+                    var rect = document.getElementById("zweb_view").getBoundingClientRect();
+                    var parent = document.getElementById("zweb_view").parentElement.parentElement;
+                    view.OnMessage(Module.ZWM_MOUSEMOVE, event.pageX - rect.left - window.pageXOffset, event
+                        .pageY - rect.top - window.pageYOffset, 0, 0);
+                    return false; //阻止默认事件或冒泡
+                }
+            }
+
+            function stop(event) {
+                if (view) {
+                    // console.log('lup');
+                    var rect = document.getElementById("zweb_view").getBoundingClientRect();
+                    var parent = document.getElementById("zweb_view").parentElement.parentElement;
+                    view.OnMessage(Module.ZWM_LBUTTONUP, event.pageX - rect.left - window.pageXOffset, event
+                        .pageY - rect.top - window.pageYOffset, 0, 0);
+                }
+            }
+
+            obj.addEventListener('mousedown', start);
+            obj.addEventListener('mousemove', move);
+            obj.addEventListener('mouseup', stop);
+
+            obj.oncontextmenu = function (event) {
+                if (view) {
+                    var rect = document.getElementById("zweb_view").getBoundingClientRect();
+                    view.OnMessage(Module.ZWM_RBUTTONDOWN, event.pageX - rect.left - window.pageXOffset,
+                        event.pageY - rect.top - window.pageYOffset, 0, 0);
+                    view.OnMessage(Module.ZWM_RBUTTONUP, event.pageX - rect.left - window.pageXOffset,
+                        event.pageY - rect.top - window.pageYOffset, 0, 0);
+                    event.preventDefault();
+                }
+            };
+
+            obj.addEventListener('dblclick', function (event) {
+                if (view) {
+                    var rect = document.getElementById("zweb_view").getBoundingClientRect();
+                    view.OnMessage(Module.ZWM_LBUTTONDBLCLK, event.pageX - rect.left - window.pageXOffset,
+                        event.pageY - rect.top - window.pageYOffset, 0, 0);
+                }
+            });
+
+            obj.addEventListener('mousewheel', function (e) {
+                if (view) {
+                    var direct = 0;
+                    e = e || window.event;
+                    if (e.wheelDelta) { //IE/Opera/Chrome
+                        direct = e.wheelDelta / 120;
+                    } else if (e.detail) { //Firefox
+                        direct = -e.wheelDelta / 3;
+                    }
+                    var rect = document.getElementById("zweb_view").getBoundingClientRect()
+                    var parent = document.getElementById("zweb_view").parentElement.parentElement;
+                    var offsetX = event.pageX - rect.x - window.pageXOffset;
+                    var offsetY = event.pageY - rect.y - window.pageYOffset;
+                    if (direct > 0)
+                        direct = 2;
+                    else
+                        direct = 0.5;
+                    view.OnMessage(Module.ZWM_MOUSEWHEEL, offsetX, offsetY, direct, 0);
+                    return false;
+                }
+            });
+
+            // function onTouchStart(event) {
+            //     event.preventDefault();
+            //     var offsetX = event.pageX;
+            //     var offsetY = event.pageY;
+            //     var touch = event.touches[0];
+            //     var rect = document.getElementById("zweb_view").getBoundingClientRect();
+            //     var parent = document.getElementById("zweb_view").parentElement.parentElement;
+            //     // console.log('touchstart', touch.pageX - rect.left - window.pageXOffset,
+            //     // touch.pageY - rect.top - window.pageYOffset);
+            //     view.OnMessage(Module.ZWM_LBUTTONDOWN, touch.pageX - rect.left - window.pageXOffset,
+            //         touch.pageY - rect.top - window.pageYOffset, 0, 0);
+            // }
+
+            // function onTouchMove(event) {
+            //     event.preventDefault();
+            //     // console.log('touchmove');
+            //     var touch = event.touches[0];
+            //     var rect = document.getElementById("zweb_view").getBoundingClientRect();
+            //     var parent = document.getElementById("zweb_view").parentElement.parentElement;
+            //     view.OnMessage(Module.ZWM_MOUSEMOVE, touch.pageX - rect.left - window.pageXOffset, touch
+            //         .pageY - rect.top - window.pageYOffset, 0, 0);
+            //     return false; //阻止默认事件或冒泡
+            // }
+
+            // function onTouchend(event) {
+            //     event.preventDefault();
+            //     // console.log('touchend');
+            //     var touch = event.touches[0];
+            //     var rect = document.getElementById("zweb_view").getBoundingClientRect();
+            //     var parent = document.getElementById("zweb_view").parentElement.parentElement;
+            //     view.OnMessage(Module.ZWM_LBUTTONUP, 0, 0, 0, 0);
+            // }
+            // obj.addEventListener('touchstart', onTouchStart, false);
+            // obj.addEventListener('touchmove', onTouchMove, false);
+            // obj.addEventListener('touchend', onTouchend, false);
+        }
+        drap(document.getElementById('zweb_view'));
+
+
     });
     window.onresize = function () {
         autosizeCanvas();

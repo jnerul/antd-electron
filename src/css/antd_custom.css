@@ -37,6 +37,7 @@
     font-size: 14px;
     border-radius: 1px;
     color: rgba(0, 0, 0, 0.85);
+    box-shadow: none;
 }
 
 .ant-btn-text:focus,
@@ -47,12 +48,31 @@
 .ant-btn-text:hover,
 .antd-my-btn:hover {
     background: rgba(0, 0, 0, .02);
+    color: #40a9ff;
+    border-color: #40a9ff;
 }
 
 .ant-btn-text:active,
 .antd-my-btn:active {
     background: rgba(0, 0, 0, .04);
 }
+
+.antd-my-btn .ant-btn[disabled] {
+    background: none;
+    border: 1px solid transparent;
+    padding: 4px;
+    line-height: 1.5715;
+    white-space: nowrap;
+    text-align: center;
+    height: 32px;
+    border-radius: 1px;
+}
+
+.ant-tooltip-disabled-compatible-wrapper {
+    padding: 0px;
+    border: none;
+}
+
 
 .ant-modal-header {
     border-bottom: none;
@@ -87,6 +107,40 @@
     padding: 0 3px;
 }
 
-/* .ant-table-thead>tr>th {
-    padding: 0px;
+.ant-modal-setup-confirm .ant-modal-confirm-body .anticon {
+    display: none;
+}
+
+.ant-modal-confirm .ant-modal-close {
+    display: block;
+}
+
+.ant-modal-setup-confirm .ant-modal-content .ant-modal-body {
+    padding: 16px 24px 24px 24px;
+}
+
+.ant-table.ant-table-small .ant-table-thead>tr>th,
+.ant-table.ant-table-small .ant-table-tbody>tr>td {
+    padding: 8px 2px;
+}
+
+/* .zpert-header-toolbar {
+    background: #f9fafb;
 } */
+
+.zpert-header {
+    display: flex;
+    width: 100%;
+    border-bottom: solid 1px #08080814;
+    /* height: 44px; */
+    padding: 6px;
+
+}
+
+.zpert-toolbar {
+    display: flex;
+    width: 100%;
+    border-bottom: solid 1px #08080814;
+    /* height: 44px; */
+    padding: 6px;
+}

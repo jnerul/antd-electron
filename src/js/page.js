@@ -66,6 +66,7 @@ const { SubMenu } = Menu;
 const { TextArea } = Input;
 import { SketchPicker } from 'react-color';
 import reactCSS from 'reactcss'
+import { pseudoRandomBytes } from "crypto";
 
 {/* <Menu.Item style={{ marginLeft: 28, textAlign: "center", fontSize: '32px' }}><FileAddTwoTone style={{}} />新建</Menu.Item> */ }
 {/* <Menu.Item style={menu_item_style} icon={<FileAddTwoTone />}><FileAddTwoTone style={menu_item_icon_style} />新建</Menu.Item> */ }
@@ -79,6 +80,10 @@ ipcRenderer.on('savefile', function (event, arg) {
     view_interface.saveFile(arg);
 })
 
+ipcRenderer.on('workdir', function (event, arg) {
+    console.log('workdir', arg);
+})
+
 function openUrl(url) {
     shell.openExternal(url).then(function () { console.log('打开成功！'); }, function (reaseon) {
         shell.openPath(url).then(function () { console.log('打开成功！') }, function (reason) {
@@ -88,163 +93,6 @@ function openUrl(url) {
 }
 
 window.open = openUrl;
-
-function handleClick(e) {
-    switch (e.key) {
-        case 'menu_newfile':
-            view_interface.newFile();
-            break;
-        case 'menu_openfile':
-            (function xml_openSelectionBox() {
-                var inputObj = document.getElementById('my_inputObj');
-                if (!inputObj) {
-                    inputObj = document.createElement('input')
-                    inputObj.setAttribute('id', 'my_inputObj');
-                    inputObj.setAttribute('type', 'file');
-                    inputObj.setAttribute("style", 'visibility:hidden');
-                    document.body.appendChild(inputObj);
-                }
-
-                function xml_parse(e) {
-                    const file = e.target.files[0];
-                    console.log('opennew', e);
-                    if (!file) {
-                        console.log('empty');
-                        document.body.removeChild(inputObj);
-                        return;
-                    }
-                    view_interface.openFile(file.path);
-                    document.body.removeChild(inputObj);
-                }
-                function delete_obj() {
-                    console.log('cancle');
-                    document.body.removeChild(inputObj);
-                }
-
-                inputObj.onchange = xml_parse;//选中文件时触发的方法
-                inputObj.oncancel = delete_obj;
-                inputObj.click();
-            })();
-
-            break;
-        case 'menu_save':
-            ipcRenderer.send("savefileas");
-            break;
-        case 'menu_saveas':
-            ipcRenderer.send("savefileas");
-            break;
-        case 'menu_export_img':
-
-            break;
-        case 'menu_export_pdf':
-
-            break;
-        case 'menu_print':
-
-            break;
-        case 'menu_close':
-
-            break;
-        case 'menu_undo':
-            view_interface.getView().OnEditUndo();
-            break;
-        case 'menu_redo':
-            view_interface.getView().OnEditRedo();
-            break;
-        case 'menu_addwork':
-            view_interface.addWork();
-            break;
-        case 'menu_addmilestone':
-            view_interface.addMilestone();
-            break;
-        case 'menu_upgrade':
-            view_interface.getView().OnUpGrade();
-            break;
-        case 'menu_downgrade':
-            view_interface.getView().OnDownGrade();
-            break;
-        case 'menu_moveup':
-            view_interface.getView().OnMoveUp();
-            break;
-        case 'menu_movedown':
-            view_interface.getView().OnMoveDown();
-            break;
-        case 'menu_goout':
-            view_interface.viewgoout();
-            break;
-        case 'menu_goin':
-            view_interface.viewgoin();
-            break;
-        case 'menu_expand_or_collasped':
-            view_interface.onCollapsed();
-            break;
-        case 'menu_expandtoall':
-            view_interface.expandTo('全部展开');
-            break;
-        case 'menu_expandto1':
-            view_interface.expandTo('层级1');
-            break;
-        case 'menu_expandto2':
-            view_interface.expandTo('层级2');
-            break;
-        case 'menu_expandto3':
-            view_interface.expandTo('层级3');
-            break;
-        case 'menu_expandto4':
-            view_interface.expandTo('层级4');
-            break;
-        case 'menu_expandto5':
-            view_interface.expandTo('层级5');
-            break;
-        case 'menu_expandto6':
-            view_interface.expandTo('层级6');
-            break;
-        case 'menu_expandto7':
-            view_interface.expandTo('层级7');
-            break;
-        case 'menu_expandto8':
-            view_interface.expandTo('层级8');
-            break;
-        case 'menu_expandto9':
-            view_interface.expandTo('层级9');
-            break;
-        case '双代号网络图':
-            view_interface.changePertMode('timenet');
-            break;
-        case '横道图':
-            view_interface.changePertMode('ganttnet');
-            break;
-        case 'menu_increase_hor_ratio':
-            view_interface.getView().OnPertLargeHorRatio();
-            break;
-        case 'menu_decrease_hor_ratio':
-            view_interface.getView().OnPertSmallHorRatio();
-            break;
-        case 'menu_increase_ver_height':
-            view_interface.getView().OnPertLargeVerRatio();
-            break;
-        case 'menu_decrease_ver_height':
-            view_interface.getView().OnPertSmallVerRatio();
-            break;
-        case 'menu_setupgeneral':
-            view_interface.getView().OnSetUp();
-            break;
-        case 'menu_setupcalendar':
-            view_interface.getView().OnSetUp();
-            break;
-        case 'menu_intelligentlayout':
-            view_interface.getView().IntelligentLayout();
-            break;
-        case 'menu_zbra_website':
-            openUrl("https://www.zpert.com");
-            break;
-        case 'menu_zbra_forum':
-            openUrl("https://bbs.zpert.com");
-            break;
-        default:
-            break;
-    }
-}
 
 function formatNumber(value) {
     value += '';
@@ -285,7 +133,7 @@ class NumericInput extends React.Component {
     };
 
     render() {
-        const { value } = this.props;
+        const { value, disabled } = this.props;
         const title = value ? (
             <span className="numeric-input-title">{value !== '-' ? formatNumber(value) : '-'}</span>
         ) : (
@@ -304,6 +152,7 @@ class NumericInput extends React.Component {
                     onBlur={this.onBlur}
                     placeholder="Input a number"
                     maxLength={25}
+                    disabled={disabled == undefined ? false : disabled}
                 />
             </Tooltip>
         );
@@ -396,7 +245,6 @@ const DatePickerInput = ({ value = '', onChange, format = 'YYYY-MM-DD HH:mm', bo
         }
     };
     const onDateChange = e => {
-        console.log('DatePickerInput', e);
         var newdate = e.format(format);
         setDate(newdate);
         triggerChange(newdate);
@@ -406,10 +254,16 @@ const DatePickerInput = ({ value = '', onChange, format = 'YYYY-MM-DD HH:mm', bo
     );
 }
 
+// import { sortableContainer, sortableElement, sortableHandle } from 'react-sortable-hoc';
+// import { MenuOutlined } from '@ant-design/icons';
+// import arrayMove from 'array-move';
+// const DragHandle = sortableHandle(() => (
+//     <MenuOutlined style={{ cursor: 'pointer', color: '#999' }} />
+// ));
+
 function CalendarSetup({ value = {}, onChange }) {
     var i = 0;
     for (var v in value.calendars) {
-        // console.log(v);
         value.calendars[v].index = i;
         i++;
         if (value.calendars[v].vacation_rules) {
@@ -437,9 +291,6 @@ function CalendarSetup({ value = {}, onChange }) {
 
     const triggerChange = (changedValue) => {
         if (onChange) {
-            console.log('calendarchange', {
-                defaultid, calendars, ...value, ...changedValue,
-            });
             onChange({
                 defaultid, calendars, ...value, ...changedValue,
             });
@@ -448,8 +299,6 @@ function CalendarSetup({ value = {}, onChange }) {
     const onUpdateCalendar = () => {
         const newData = [...showcalendar.vacation_rules];
         setDataSource(newData);
-        // const newperiodsData = [...showcalendar.work_periods];
-        // setPeriodDataSource(newperiodsData);
         triggerChange({
             calendars: calendars
         });
@@ -497,8 +346,8 @@ function CalendarSetup({ value = {}, onChange }) {
         showcalendar.vacation_rules.push({
             name: '新假期',
             type: 0,
-            start: moment.utc(moment().format('YYYY-MM-DD HH:mm')).unix(),
-            stop: moment.utc(moment().format('YYYY-MM-DD HH:mm')).unix(),
+            start: moment.utc(moment().format('YYYY-MM-DD')).unix(),
+            stop: moment.utc(moment().format('YYYY-MM-DD')).unix(),
             is_vacation: true,
             is_show_name: true,
             is_valid: true,
@@ -527,14 +376,13 @@ function CalendarSetup({ value = {}, onChange }) {
                 title: '显示名称',
                 dataIndex: 'is_show_name',
                 key: 'is_show_name',
-                width: 75,
+                width: 65,
                 render: (text, record, index) => {
                     const onChange = (e) => {
                         record.is_show_name = e.target.checked;
                         onUpdateCalendar();
-                        console.log(showcalendar);
                     };
-                    return (<Checkbox onChange={onChange} defaultChecked={text}></Checkbox>);
+                    return (<Checkbox onChange={onChange} style={{ paddingLeft: 22 }} defaultChecked={text}></Checkbox>);
                 },
             },
             {
@@ -549,18 +397,15 @@ function CalendarSetup({ value = {}, onChange }) {
                 title: '类型',
                 dataIndex: 'type',
                 key: 'type',
-                width: 90,
+                width: 80,
                 render: (text, record, index) => {
-                    // console.log('类型', text, record, index);
                     const onCalendarTypeChange = (newid) => {
-                        console.log('newid', newid, record);
                         var old_type = record.type;
                         record.type = parseInt(newid);
                         if (old_type != record.type) {
-                            console.log('reset');
                             if (record.type == 0) {
-                                record.start = moment.utc(moment().format('YYYY-MM-DD HH:mm')).unix();
-                                record.stop = moment.utc(moment().format('YYYY-MM-DD HH:mm')).unix();
+                                record.start = moment.utc(moment().format('YYYY-MM-DD')).unix();
+                                record.stop = moment.utc(moment().format('YYYY-MM-DD')).unix();
                             } else if (record.type == 1) {
                                 //周
                                 record.start = 6;
@@ -570,13 +415,12 @@ function CalendarSetup({ value = {}, onChange }) {
                                 record.start = 1;
                                 record.stop = 1;
                             } if (record.type == 3) {
-                                var current = moment.utc(moment().format('YYYY-MM-DD HH:mm'));
-                                record.start = current.month() * 100 + current.date();
-                                record.stop = current.month() * 100 + current.date();
+                                var current = moment.utc(moment().format('YYYY-MM-DD'));
+                                record.start = (current.month() + 1) * 100 + current.date();
+                                record.stop = (current.month() + 1) * 100 + current.date();
                             }
                         }
                         onUpdateCalendar();
-                        console.log('showcalendar', showcalendar);
                     };
                     return (<Select
                         defaultValue={text === 0 ? '按日期' : text === 1 ? '按周' : text === 2 ? '按月' : text === 3 ? '按年' : ''}
@@ -595,7 +439,7 @@ function CalendarSetup({ value = {}, onChange }) {
                 title: '开始',
                 dataIndex: 'start',
                 key: 'start',
-                width: 120,
+                width: 110,
                 render: (text, record, index) => {
                     const onCalendarStartChange = (data) => {
                         if (record.type == 0) {
@@ -670,7 +514,7 @@ function CalendarSetup({ value = {}, onChange }) {
                 title: '完成',
                 dataIndex: 'stop',
                 key: 'stop',
-                width: 120,
+                width: 110,
                 render: (text, record, index) => {
                     const onCalendarStopChange = (data) => {
                         if (record.type == 0) {
@@ -745,18 +589,43 @@ function CalendarSetup({ value = {}, onChange }) {
                 title: '持续时间',
                 dataIndex: 'duration',
                 key: 'duration',
-                width: 80,
-                editable: true,
+                width: 65,
+                render: (text, record, index) => {
+                    var result = 1;
+                    if (record.type == 0) {
+                        var start = moment.unix(record.start).utc();
+                        var stop = moment.unix(record.stop).utc();
+                        var duration = moment.duration(stop.diff(start));
+                        result = duration.asDays() + 1;
+                    } else if (record.type == 1) {
+                        result = (record.stop < record.start ? record.stop + 7 : record.stop) - record.start + 1;
+                    } else if (record.type == 2) {
+                        result = (record.stop < record.start ? record.stop + 31 : record.stop) - record.start + 1;
+                    } else if (record.type == 3) {
+                        if (record.stop >= record.start) {
+                            var start = moment.utc(`${2018}-${parseInt(record.start / 100)}-${record.start % 100}`, 'YYYY-MM-DD');
+                            var stop = moment.utc(`${2018}-${parseInt(record.stop / 100)}-${record.stop % 100}`, 'YYYY-MM-DD');
+                            var duration = moment.duration(stop.diff(start));
+                            result = duration.asDays() + 1;
+                        } else {
+                            var start = moment.utc(`${2018}-${parseInt(record.start / 100)}-${record.start % 100}`, 'YYYY-MM-DD');
+                            var stop = moment.utc(`${2019}-${parseInt(record.stop / 100)}-${record.stop % 100}`, 'YYYY-MM-DD');
+                            var duration = moment.duration(stop.diff(start));
+                            result = duration.asDays() + 1;
+                        }
+                    }
+                    return (<div style={{ paddingLeft: 8 }}>
+                        {result}
+                    </div>);
+                }
             },
             {
                 title: '休息',
                 dataIndex: 'is_vacation',
                 key: 'is_vacation',
-                width: 90,
+                width: 80,
                 render: (text, record, index) => {
-                    console.log('表格刷新休息', text, record, record.is_valid ? (record.is_vacation ? '休息' : '工作') : '仅填充');
                     const onCalendarIsvacationChange = (newid) => {
-                        console.log(record, newid, index);
                         if (newid === '仅填充')
                             record.is_valid = false;
                         else {
@@ -768,7 +637,6 @@ function CalendarSetup({ value = {}, onChange }) {
                             }
                         }
                         onUpdateCalendar();
-                        console.log(showcalendar);
                     };
                     return (<Select
                         defaultValue={record.is_valid ? (record.is_vacation ? '休息' : '工作') : '仅填充'}
@@ -786,7 +654,7 @@ function CalendarSetup({ value = {}, onChange }) {
                 title: '填充',
                 dataIndex: 'back_color',
                 key: 'back_color',
-                width: 80,
+                width: 70,
                 render: (text, record, index) => {
                     const onCalendarBackColorChange = (newcolor) => {
                         record.back_color = newcolor.r | newcolor.g << 8 | newcolor.b << 16;
@@ -818,7 +686,7 @@ function CalendarSetup({ value = {}, onChange }) {
                                 showArrow={false}
                                 bordered={false}
                                 onDropdownVisibleChange={onDropdownVisibleChange}
-                                style={{ width: 60, backgroundColor: `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`, borderRadius: 4, }}
+                                style={{ marginLeft: 4, marginRight: 4, width: 60, backgroundColor: `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`, borderRadius: 4, }}
                             >
                             </Select>
                         );
@@ -838,7 +706,6 @@ function CalendarSetup({ value = {}, onChange }) {
         const index = showcalendar.vacation_rules.findIndex((item) => row.key === item.key);
         const item = showcalendar.vacation_rules[index];
         showcalendar.vacation_rules.splice(index, 1, { ...item, ...row });
-        console.log('handleSave', row, item);
         onUpdateCalendar();
     };
     const show_columns = columns.map((col) => {
@@ -877,7 +744,7 @@ function CalendarSetup({ value = {}, onChange }) {
                 <Button type="primary" style={{ marginLeft: 8, paddingLeft: 8, paddingRight: 8 }}>删除当前日历</Button>
             </Row>
             <Row gutter={8}>
-                <Col flex="340px" className="ant-col-table" style={{ width: "400px" }}>
+                <Col className="ant-col-table" style={{ width: "540px" }}>
                     <section style={{ marginTop: 5, paddingTop: 14, border: "1px solid #f0f0f0" }}>
                         <div style={{ position: "absolute", top: "-14px", marginTop: 5, marginLeft: 8, lineHeight: 2, padding: "1px 4px", background: "#fff" }}>
                             休息日/阶段设置
@@ -901,7 +768,7 @@ function CalendarSetup({ value = {}, onChange }) {
                         </div>
                     </section>
                 </Col>
-                <Col flex="140px" style={{ width: "140px" }}>
+                <Col flex="140px" >
                     <section style={{ marginTop: 5, paddingTop: 14, border: "1px solid #f0f0f0" }}>
                         <div style={{ position: "absolute", top: "-14px", marginTop: 5, marginLeft: 8, lineHeight: 2, padding: "1px 4px", background: "#fff" }}>
                             工作时间设置
@@ -920,15 +787,11 @@ function CalendarSetup({ value = {}, onChange }) {
                                         dataIndex: 'start',
                                         key: 'start',
                                         render: (text, record, index) => {
-                                            console.log('开始', text, record);
                                             const onCalendarWorkPerStartChange = e => {
                                                 var s = e[0].format('HH:mm')
-                                                console.log(s);
                                                 record[0] = (parseInt(s.slice(0, 2)) * 60 + parseInt(s.slice(3, 5))) * 60;
                                                 s = e[1].format('HH:mm')
-                                                console.log(s);
                                                 record[1] = (parseInt(s.slice(0, 2)) * 60 + parseInt(s.slice(3, 5))) * 60;
-                                                console.log('onCalendarWorkPerStartChange', e, record);
                                                 onUpdateCalendarPeriods();
                                             }
                                             return ({
@@ -983,11 +846,7 @@ function CalendarSetup({ value = {}, onChange }) {
     );
 }
 
-function GeneralSetUp({ value = {}, onChange }) {
-    const layout = {
-        labelCol: { span: 4 },
-        wrapperCol: { span: 17 },
-    };
+function GeneralSetUp({ value = {}, onChange, tabindex = "1" }) {
 
     const DurationInput = ({ value = {}, onChange }) => {
         const [number, setNumber] = useState(1);
@@ -995,9 +854,6 @@ function GeneralSetUp({ value = {}, onChange }) {
 
         const triggerChange = (changedValue) => {
             if (onChange) {
-                console.log('onchange', number, currency, {
-                    number, currency, ...value, ...changedValue,
-                });
                 onChange({
                     number, currency, ...value, ...changedValue,
                 });
@@ -1016,7 +872,6 @@ function GeneralSetUp({ value = {}, onChange }) {
             });
         }
         const onCurrencyChange = (newCurrency) => {
-            console.log(newCurrency);
             if (!('currency' in value)) {
                 setCurrency(newCurrency);
             }
@@ -1048,25 +903,14 @@ function GeneralSetUp({ value = {}, onChange }) {
             </span>
         );
     };
-
-    // const onFinish = values => {
-    //     // console.log('Success:', values);
-    //     // if (onOK) {
-    //     //     onOK(values);
-    //     // }
-    // };
-    // const onFinishFailed = errorInfo => {
-    //     // console.log('Failed:', errorInfo);
-    // };
     const onValuesChange = value => {
         if (onChange) {
             onChange(value);
         }
     }
-    // console.log('refreshGeneralSetUp', value)
     return (
         <>
-            <Tabs defaultActiveKey="1" >
+            <Tabs defaultActiveKey={tabindex} type="card" size='small'>
                 <TabPane tab="常规" key="1">
                     <Form
                         layout="vertical"
@@ -1076,8 +920,6 @@ function GeneralSetUp({ value = {}, onChange }) {
                             tag: value.tag || '',
                             describe: value.describe || '',
                         }}
-                        // onFinish={onFinish}
-                        // onFinishFailed={onFinishFailed}
                         onValuesChange={onValuesChange}
                         validateTrigger={["onBlur", "onChange"]}
                     >
@@ -1098,11 +940,8 @@ function GeneralSetUp({ value = {}, onChange }) {
                             ask_start_time: value.ask_start_time || '',
                             ask_stop_time: value.ask_stop_time || '',
                             schedule: value.schedule || 0,
-                            // askduration: { number: value.askduration || 1, currency: value.durationunit ? (value.durationunit == 0 ? 'day' : (value.durationunit == 1 ? 'hour' : 'minute')) : 'day' },
                             askduration: { number: value.askduration || 1, currency: value.durationunit || 0 },
                         }}
-                        // onFinish={onFinish}
-                        // onFinishFailed={onFinishFailed}
                         onValuesChange={onValuesChange}
                         validateTrigger={["onBlur", "onChange"]}
                     >
@@ -1159,7 +998,7 @@ function GeneralSetUp({ value = {}, onChange }) {
     );
 }
 
-const SetupPage = ({ value = {}, onChange, onOk }) => {
+const SetupPage = ({ value = {}, onChange, onOk, tabindex = 1 }) => {
     const [isvisible, setVisible] = useState(false);
 
     const setupOk = e => {
@@ -1186,7 +1025,7 @@ const SetupPage = ({ value = {}, onChange, onOk }) => {
             <Button style={{ display: "none" }} type="primary" onClick={showModal} id="modalbutton"> Open Modal </Button>
             <Modal
                 title='Zpert'
-                width={620}
+                width={720}
                 visible={isvisible}
                 onOk={setupOk}
                 onCancel={setupCancel}
@@ -1197,257 +1036,319 @@ const SetupPage = ({ value = {}, onChange, onOk }) => {
                 maskClosable={false}
                 destroyOnClose={true}
             >
-                <GeneralSetUp value={value} onChange={onDataChange} ></GeneralSetUp>
+                <GeneralSetUp value={value} onChange={onDataChange} tabindex={tabindex}></GeneralSetUp>
             </Modal>
         </>
     );
 }
 
-class BtnGroup extends React.Component {
-    constructor(props) {
-        super(props);
-        console.log('dirname', __dirname)
-        this.state = {
-            pertMode: props.pertMode, menu: props.menu, style: props.style,
-            collapsed: "折叠/展开", is_show_btn_text: true, ver_height: '', hor_ratio: '', setup_data: {}, update_data: {}, setup_callback: undefined,
-        };
+function showsetup(value, index, onDataChange) {
+    Modal.confirm({
+        className: "ant-modal-setup-confirm",
+        width: 720,
+        okText: "确定",
+        cancelText: "取消",
+        centered: true,
+        mask: false,
+        maskClosable: false,
+        closable: true,
+        content: <GeneralSetUp value={value} onChange={onDataChange} tabindex={index}></GeneralSetUp>,
     }
-    onSetUpDataChange = e => {
-        var new_update_data = { ...this.state.update_data, ...e };
-        console.log('onSetUpDataChange', e);
-        this.setState({
-            update_data: new_update_data
-        });
-        console.log(new_update_data);
-    }
-    onSetupOk = e => {
-        console.log('ok', this.state.update_data);
-        this.state.setup_callback({ result: this.state.update_data });
-    }
-
-    initView() {
-        view_interface.initwasm({
-            call_back: {
-                updateMenu: (e) => {
-                    this.updateMenu(e);
-                }
-            },
-            createSettingDialog: (data) => {
-                console.log('createdialog', data);
-                return new Promise((resolve, reject) => {
-                    this.setState({ setup_data: data });
-                    this.setState({ update_data: {} });
-                    document.getElementById('modalbutton').click();
-                    this.setState({ setup_callback: resolve });
-                    // this.setupOk = e => {
-                    //     console.log('resolve')
-                    //     resolve({ result: { date: "2020-12-14" } });
-                    // };
-                });
-            }
-        });
-        view_interface.setMessageBox(info);
-    }
-
-    updateMenu(info) {
-        console.log(info);
-        if (info.edit_width) { this.setState({ hor_ratio: info.edit_width }); }
-        if (info.edit_height) { this.setState({ ver_height: info.edit_height }); }
-    }
-
-    componentDidMount() {
-        console.log('initview', this.state)
-        this.initView();
-
-        Mousetrap.bind('alt+shift+left', () => { this.OnUpGrade(); return false; },);
-        Mousetrap.bind('alt+shift+right', () => { this.OnDownGrade(); return false; },);
-        Mousetrap.bind('mod+alt+up', () => { this.OnMoveUp(); return false; },);
-        Mousetrap.bind('mod+alt+down', () => { this.OnMoveDown(); return false; },);
-        Mousetrap.bind('shift+alt+up', () => { this.OnGoOut(); return false; },);
-        Mousetrap.bind('shift+alt+down', () => { this.OnGoIn(); return false; },);
-        Mousetrap.bind('ctrl+w', () => { this.AddWork(); return false; });
-        Mousetrap.bind('ctrl+m', () => { this.AddMilestone(); return false; });
-        Mousetrap.bind('ctrl+z', () => { handleClick({ key: "menu_undo" }); return false; });
-        Mousetrap.bind('ctrl+y', () => { handleClick({ key: "menu_redo" }); return false; });
-        Mousetrap.bind('ctrl+c', () => { console.log('复制'); return false; });
-        Mousetrap.bind('ctrl+v', () => { console.log('粘贴'); return false; });
-        Mousetrap.bind('ctrl+1', () => { console.log('设置'); return false; });
-        Mousetrap.bind('del', () => { view_interface.getView().OnDelete(); return false; });
-        // var js = document.createElement('script');
-        // js.async = false;
-        // js.type = 'text/javascript';
-        // js.src = "js/zpert.js";
-        // js.onload = function () {
-        //     console.log(this);
-        //     // this.initView();
-        // }
-        // document.getElementsByTagName('head')[0].appendChild(js);
-    }
-
-    onChangePertMode = (e) => {
-        handleClick(e);
-        this.setState({
-            pertMode: e.key
-        });
-    };
-
-    pert_mode_menu = (
-        <Menu onClick={this.onChangePertMode}>
-            <Menu.Item style={this.menu_item_style} key="双代号网络图"><span>双代号网络图</span></Menu.Item>
-            <Menu.Item style={this.menu_item_style} key="横道图"><span>横道图</span></Menu.Item>
-        </Menu>
     );
-
-    onCollapsed = (e) => {
-        handleClick(e);
-    }
-
-    collapse_menu = (
-        <Menu onClick={this.onCollapsed}>
-            <Menu.Item key="menu_expandtoall">全部展开</Menu.Item>
-            <Menu.Item key="menu_expandto1">层级1</Menu.Item>
-            <Menu.Item key="menu_expandto2">层级2</Menu.Item>
-            <Menu.Item key="menu_expandto3">层级3</Menu.Item>
-            <Menu.Item key="menu_expandto4">层级4</Menu.Item>
-            <Menu.Item key="menu_expandto5">层级5</Menu.Item>
-            <Menu.Item key="menu_expandto6">层级6</Menu.Item>
-            <Menu.Item key="menu_expandto7">层级7</Menu.Item>
-            <Menu.Item key="menu_expandto8">层级8</Menu.Item>
-            <Menu.Item key="menu_expandto9">层级9</Menu.Item>
-        </Menu>
-    );
-    HeartSvg = (props) => (
-        <>
-            <svg className="menu_icon" viewBox="0 0 64 64"> <use xlinkHref={`#icon-${props.iconClass}`} /> </svg>
-        </>
-    );
-    IconBtn = (props) => {
-        return (
-            <Tooltip placement="bottomLeft" title={props.title} color='white' mouseEnterDelay={0.005} mouseLeaveDelay={0.005}>
-                {/* <Button style={{ paddingRight: 4, paddingLeft: props.paddingLeft != undefined ? props.paddingLeft : 4 }} type="text"
-                    icon={<this.HeartSvg iconClass={props.iconClass} />} onClick={props.onClick}>
-                    {this.state.is_show_btn_text ? props.content : " "}
-                </Button> */}
-                <div className="antd-my-btn" style={{ display: "inline-block" }} onClick={props.onClick}>
-                    <this.HeartSvg iconClass={props.iconClass} />
-                    <span >{this.state.is_show_btn_text ? props.content : " "}</span>
-                </div>
-            </Tooltip>
-        );
-    }
-
-    BtnIcon = (props) => {
-        return (
-            <Tooltip placement="bottomLeft" title={props.title} color='white' mouseEnterDelay={0.005} mouseLeaveDelay={0.005}>
-                {/* <span>{props.content}</span>
-                <Button style={{ padding: 4 }} type="text" icon={<this.HeartSvg iconClass={props.iconClass} />} onClick={props.onClick}>{" "}</Button> */}
-                <div className="antd-my-btn" style={{ display: "inline-block" }} onClick={props.onClick}>
-                    <span >{this.state.is_show_btn_text ? props.content : " "}</span>
-                    <this.HeartSvg iconClass={props.iconClass} />
-                </div>
-            </Tooltip>
-        );
-    }
-
-
-    // this.setState({ is_show_btn_text: true });
-    OnUpGrade = () => { handleClick({ key: "menu_upgrade" }); }
-    OnDownGrade = () => { handleClick({ key: "menu_downgrade" }); }
-    OnGoIn = () => { handleClick({ key: "menu_goin" }); }
-    OnGoOut = () => { handleClick({ key: "menu_goout" }); }
-    OnMoveUp = () => { handleClick({ key: "menu_moveup" }); }
-    OnMoveDown = () => { handleClick({ key: "menu_movedown" }); }
-    AddWork = () => { handleClick({ key: "menu_addwork" }); }
-    AddMilestone = () => { handleClick({ key: "menu_addmilestone" }); }
-    IntelligentLayout = () => { handleClick({ key: "menu_intelligentlayout" });; }
-    OnSetHorRatio = () => {
-        var value = this.state.hor_ratio;
-        if (value != '') {
-            this.setState({ hor_ratio: value });
-            view_interface.getView().SetHorRatio(parseFloat(value));
-        }
-
-    }
-    OnSetVerHeight = (value) => {
-        var value = this.state.ver_height;
-        if (value != '') {
-            if (parseInt(value) < 1)
-                this.setState({ ver_height: '1' });
-            else
-                this.setState({ ver_height: value });
-            view_interface.getView().SetVerHeight(Math.max(parseInt(value), 1));
-        }
-    }
-    OnPertLargeHorRatio = () => { handleClick({ key: "menu_increase_hor_ratio" }); }
-    OnPertSmallHorRatio = () => { handleClick({ key: "menu_decrease_hor_ratio" }); }
-    OnPertLargeVerRatio = () => { handleClick({ key: "menu_increase_ver_height" }); }
-    OnPertSmallVerRatio = () => { handleClick({ key: "menu_decrease_ver_height" }); }
-
-    render() {
-        console.log('refresh')
-        return (
-            <div>
-                <Dropdown overlay={this.pert_mode_menu} placement="bottomLeft" trigger={['hover']} >
-                    <Button style={{ marginLeft: 8, padding: 4 }} type="text">{this.state.pertMode}<DownOutlined /></Button>
-                </Dropdown >
-                <Divider type="vertical" />
-                <Dropdown overlay={this.collapse_menu} placement="bottomLeft" trigger={['hover']} >
-                    <Button style={{ padding: 4 }} type="text">{this.state.collapsed}<DownOutlined /></Button>
-                </Dropdown >
-                <this.IconBtn iconClass="升级" title="升级(Ctrl+Shift+←)" content="升级" onClick={this.OnUpGrade} />
-                <this.IconBtn iconClass="降级" title="降级(Ctrl+Shift+→)" content="降级" onClick={this.OnDownGrade} />
-                <this.IconBtn iconClass="上钻" title="上钻(Shift+Alt+↑)" content="上钻" onClick={this.OnGoOut} />
-                <this.IconBtn iconClass="下钻" title="下钻(Shift+Alt+↓)" content="下钻" onClick={this.OnGoIn} />
-                <this.IconBtn iconClass="上移" title="上移(Ctrl+Alt+↑)" content="上移" onClick={this.OnMoveUp} />
-                <this.IconBtn iconClass="下移" title="下移(Ctrl+Alt+↓)" content="下移" onClick={this.OnMoveDown} />
-                <Divider type="vertical" />
-                <this.IconBtn iconClass="添加工作" title="添加工作(Ctrl+W)" content="添加工作" onClick={this.AddWork} />
-                <this.IconBtn iconClass="添加里程碑" title="添加里程碑(Ctrl+M)" content="添加里程碑" onClick={this.AddMilestone} />
-                <Divider type="vertical" />
-                <this.BtnIcon iconClass="宽度大" title="横向撑长网络" content="宽度" onClick={this.OnPertLargeHorRatio} />
-                <NumericInput style={{ width: 50, height: 28, padding: 2 }} value={this.state.hor_ratio} onChange={(v) => { this.setState({ hor_ratio: v }); }} onBlur={this.OnSetHorRatio} />
-                <this.IconBtn iconClass="宽度小" title="横向压缩网络" content=" " onClick={this.OnPertSmallHorRatio} />
-                <this.BtnIcon iconClass="高度大" title="纵向撑长网络" content="高度" onClick={this.OnPertLargeVerRatio} />
-                <NumericInput style={{ width: 50, height: 28, padding: 2 }} value={this.state.ver_height} onChange={(v) => { this.setState({ ver_height: v }); }} onBlur={this.OnSetVerHeight} />
-                <this.IconBtn iconClass="高度小" title="纵向压缩网络" content=" " onClick={this.OnPertSmallVerRatio} />
-                <Divider type="vertical" />
-                <this.IconBtn iconClass="日历" title="日历设置" content="日历设置" onClick={this.AddMilestone} />
-                <this.IconBtn iconClass="智能调图" title="智能调图" content="智能调图" onClick={this.IntelligentLayout} />
-                <SetupPage value={this.state.setup_data} onChange={this.onSetUpDataChange} onOk={this.onSetupOk}></SetupPage>
-            </div>
-        )
-    }
 }
 
 class ZPertMenu extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+            disabled: true,
+            pertMode: '双代号网络图',
+            cur_view: '计划编制',
+            menu: props.menu,
+            style: props.style,
+            collapsed: "展开",
+            is_show_btn_text: true,
+            ver_height: '',
+            hor_ratio: '',
+            setup_data: {},
+            update_data: {},
+            setup_callback: undefined,
+            setup_index: '1',
+            view_set: ['计划编制'],
+            clipboard: '',
+        };
     }
 
-    menu_item_style = {
-        // lineHeight: "32px"
-    };
+    onFileOpen = () => {
+        console.log(view_interface);
+        this.setState({
+            disabled: false,
+        });
+        this.setState({
+            view_set: JSON.parse(view_interface.getView().GetViews()),
+        });
+        view_interface.getView().OnFileOpen();
+    }
+    onFileClose = () => {
+        this.setState({
+            view_set: JSON.parse(view_interface.getView().GetViews()),
+            disabled: true
+        });
+        view_interface.onClose();
+    }
+
+    handleClick = (e) => {
+        switch (e.key) {
+            case 'menu_newfile':
+                view_interface.newFile();
+                this.onFileOpen();
+                break;
+            case 'menu_openfile':
+                const onfileopen = this.onFileOpen;
+                (function xml_openSelectionBox() {
+                    var inputObj = document.getElementById('my_inputObj');
+                    if (!inputObj) {
+                        inputObj = document.createElement('input')
+                        inputObj.setAttribute('id', 'my_inputObj');
+                        inputObj.setAttribute('type', 'file');
+                        inputObj.setAttribute("style", 'visibility:hidden');
+                        document.body.appendChild(inputObj);
+                    }
+
+                    function xml_parse(e) {
+                        const file = e.target.files[0];
+                        if (!file) {
+                            document.body.removeChild(inputObj);
+                            return;
+                        }
+
+                        const path = require('path')
+                        const fs = require('fs');
+                        //7z.exe x b.zpet -p加密锁验证失败，程序将退出! -otemp
+
+                        var open_path = file.path;
+                        if (os.platform() === 'win32') {
+                            ipcRenderer.send("openfile");
+                            ipcRenderer.invoke('getapppath').then((result) => {
+                                var cmd = path.join(result, '7z/7z.exe');
+                                var outdir = path.join(result, 'temp');
+                                if (fs.existsSync(outdir)) {
+                                    fs.rmdirSync(outdir, { recursive: true });
+                                }
+                                require('child_process').spawnSync(cmd, ['x', open_path, '-p加密锁验证失败，程序将退出!', '-o' + outdir]);
+                                open_path = path.join(outdir, '0000')
+                                if (!fs.existsSync(open_path)) {
+                                    open_path = path.join(outdir, 'zpet')
+                                }
+                                view_interface.openFile(open_path).then(function () {
+                                    onfileopen();
+                                });
+                            })
+                        } else {
+                            view_interface.openFile(open_path).then(function () {
+                                onfileopen();
+                            });
+                        }
+
+                        document.body.removeChild(inputObj);
+                    }
+                    function delete_obj() {
+                        document.body.removeChild(inputObj);
+                    }
+
+                    inputObj.onchange = xml_parse;//选中文件时触发的方法
+                    inputObj.oncancel = delete_obj;
+                    inputObj.click();
+                })();
+                break;
+            case 'menu_save':
+                ipcRenderer.send("savefileas");
+                break;
+            case 'menu_saveas':
+                ipcRenderer.send("savefileas");
+                break;
+            case 'menu_export_img':
+
+                break;
+            case 'menu_export_pdf':
+                break;
+            case 'menu_export_excel':
+                const fs = require('fs');
+                const xlsx = require('better-xlsx');
+                const file = new xlsx.File();
+
+                const sheet = file.addSheet('Sheet1');
+                const row = sheet.addRow();
+                const cell = row.addCell();
+
+                cell.value = 'I am a cell!';
+                cell.hMerge = 2;
+                cell.vMerge = 1;
+
+                const style = new xlsx.Style();
+
+                style.fill.patternType = 'solid';
+                style.fill.fgColor = '00FF0000';
+                style.fill.bgColor = 'FF000000';
+                style.align.h = 'center';
+                style.align.v = 'center';
+
+                cell.style = style;
+
+                file
+                    .saveAs()
+                    .pipe(fs.createWriteStream('test.xlsx'))
+                    .on('finish', () => console.log('Done.'));
+                // var stream;
+                // file.saveAs('blob')
+                //     .then(function (blob) {
+                //         console.log(blob);
+
+                //         var reader = new FileReader();
+                //         reader.readAsText(blob, 'utf-8');
+                //         reader.onload = function (e) {
+                //             console.log(reader.result);
+                //             fs.writeFile('C:/Users/liyh-l/Desktop/test.xlsx', reader.result, { encoding: 'utf8'}, function (err) {
+                //                 if (err)
+                //                     throw err;
+                //                 console.log('保存成功');
+                //             })
+                //         }
+                //     });
+                // .pipe(stream)
+                // .on('finish', () => console.log('Done.', stream));
+                break;
+            case 'menu_print':
+
+                break;
+            case 'menu_close':
+                this.onFileClose();
+                break;
+            case 'menu_undo':
+                view_interface.getView().OnEditUndo();
+                break;
+            case 'menu_redo':
+                view_interface.getView().OnEditRedo();
+                break;
+            case 'menu_addwork':
+                view_interface.addWork();
+                break;
+            case 'menu_addmilestone':
+                view_interface.addMilestone();
+                break;
+            case 'menu_upgrade':
+                view_interface.getView().OnUpGrade();
+                break;
+            case 'menu_downgrade':
+                view_interface.getView().OnDownGrade();
+                break;
+            case 'menu_moveup':
+                view_interface.getView().OnMoveUp();
+                break;
+            case 'menu_movedown':
+                view_interface.getView().OnMoveDown();
+                break;
+            case 'menu_goout':
+                view_interface.getView().OnGoOut();
+                break;
+            case 'menu_goin':
+                view_interface.getView().OnGoIn();
+                break;
+            case 'menu_expand_or_collasped':
+                view_interface.onCollapsed();
+                break;
+            case 'menu_expandtoall':
+                view_interface.expandTo('全部展开');
+                break;
+            case 'menu_expandto1':
+                view_interface.expandTo('层级1');
+                break;
+            case 'menu_expandto2':
+                view_interface.expandTo('层级2');
+                break;
+            case 'menu_expandto3':
+                view_interface.expandTo('层级3');
+                break;
+            case 'menu_expandto4':
+                view_interface.expandTo('层级4');
+                break;
+            case 'menu_expandto5':
+                view_interface.expandTo('层级5');
+                break;
+            case 'menu_expandto6':
+                view_interface.expandTo('层级6');
+                break;
+            case 'menu_expandto7':
+                view_interface.expandTo('层级7');
+                break;
+            case 'menu_expandto8':
+                view_interface.expandTo('层级8');
+                break;
+            case 'menu_expandto9':
+                view_interface.expandTo('层级9');
+                break;
+            case '双代号网络图':
+                view_interface.changePertMode('timenet');
+                break;
+            case '横道图':
+                view_interface.changePertMode('ganttnet');
+                break;
+            case 'menu_increase_hor_ratio':
+                view_interface.getView().OnPertLargeHorRatio();
+                break;
+            case 'menu_decrease_hor_ratio':
+                view_interface.getView().OnPertSmallHorRatio();
+                break;
+            case 'menu_increase_ver_height':
+                view_interface.getView().OnPertLargeVerRatio();
+                break;
+            case 'menu_decrease_ver_height':
+                view_interface.getView().OnPertSmallVerRatio();
+                break;
+            case 'menu_setupgeneral':
+                view_interface.getView().OnSetUp(1);
+                break;
+            case 'menu_setupcalendar':
+                view_interface.getView().OnSetUp(2);
+                break;
+            case 'menu_intelligentlayout':
+                view_interface.getView().IntelligentLayout();
+                break;
+            case 'menu_zbra_website':
+                openUrl("https://www.zpert.com");
+                break;
+            case 'menu_zbra_forum':
+                openUrl("https://bbs.zpert.com");
+                break;
+            default:
+                break;
+        }
+    }
+
     menu_item_icon_style = { fontSize: '24px', top: '4px', position: 'relative', }
     menu_item_non_icon_style = { marginLeft: 32, }
 
-    file_menu = (
-        <Menu style={{ width: 150 }} onClick={handleClick}>
-            <Menu.Item style={this.menu_item_style} icon={<FileAddTwoTone />} key="menu_newfile">新建</Menu.Item>
-            <Menu.Item style={this.menu_item_style} icon={<FolderOpenTwoTone />} key="menu_openfile"><span>打开</span></Menu.Item>
-            <Menu.Item style={this.menu_item_style} icon={<SaveTwoTone />} key="menu_save"><span>保存</span></Menu.Item>
-            <Menu.Item style={this.menu_item_style} key="menu_saveas"><span style={this.menu_item_non_icon_style}>另存为</span></Menu.Item>
-            <Menu.Divider />
-            <SubMenu title={<span >导出</span>} >
-                <Menu.Item key="menu_export_img">图片</Menu.Item>
-                <Menu.Item key="menu_export_pdf">PDF</Menu.Item>
-            </SubMenu >
-            <Menu.Item style={this.menu_item_style} icon={<PrinterTwoTone />} key="menu_print"><span>打印</span></Menu.Item>
-            <Menu.Item style={this.menu_item_style} icon={<CloseCircleTwoTone />} key="menu_close"><span>关闭文件</span></Menu.Item>
-        </Menu >
-    );
+    file_menu = () => {
+        return (
+            <Menu style={{ width: 150 }} onClick={this.handleClick}>
+                <Menu.Item style={this.menu_item_style} icon={<FileAddTwoTone />} key="menu_newfile">新建</Menu.Item>
+                <Menu.Item style={this.menu_item_style} icon={<FolderOpenTwoTone />} key="menu_openfile"><span>打开</span></Menu.Item>
+                <Menu.Item style={this.menu_item_style} icon={<SaveTwoTone />} key="menu_save" disabled={this.state.disabled}><span>保存</span></Menu.Item>
+                <Menu.Item style={this.menu_item_style} key="menu_saveas" disabled={this.state.disabled}><span style={this.menu_item_non_icon_style}>另存为</span></Menu.Item>
+                <Menu.Divider />
+                <SubMenu title={<span >导出</span>} disabled={this.state.disabled}>
+                    <Menu.Item key="menu_export_img">图片</Menu.Item>
+                    <Menu.Item key="menu_export_pdf">PDF</Menu.Item>
+                    <Menu.Item key="menu_export_excel">excel</Menu.Item>
+                </SubMenu >
+                <Menu.Item style={this.menu_item_style} icon={<PrinterTwoTone />} key="menu_print" disabled={this.state.disabled}><span>打印</span></Menu.Item>
+                <Menu.Item style={this.menu_item_style} icon={<CloseCircleTwoTone />} key="menu_close" disabled={this.state.disabled}><span>关闭文件</span></Menu.Item>
+            </Menu >
+        );
+    }
 
     eidt_menu = (
-        <Menu onClick={handleClick}>
+        <Menu onClick={this.handleClick}>
             <Menu.Item style={this.menu_item_style} key="menu_undo"><span>撤销 (Ctrl+Z)</span></Menu.Item>
             <Menu.Item style={this.menu_item_style} key="menu_redo"><span>重做 (Ctrl+Y)</span></Menu.Item>
             <Menu.Item style={this.menu_item_style} key="menu_addwork"><span>插入工作 (Ctrl+W)</span></Menu.Item>
@@ -1456,7 +1357,7 @@ class ZPertMenu extends React.Component {
     );
 
     operator_menu = (
-        <Menu onClick={handleClick}>
+        <Menu onClick={this.handleClick}>
             <Menu.Item style={this.menu_item_style} key="menu_upgrade"><span>升级</span></Menu.Item>
             <Menu.Item style={this.menu_item_style} key="menu_downgrade"><span>降级</span></Menu.Item>
             <Menu.Item style={this.menu_item_style} key="menu_moveup"><span>上移</span></Menu.Item>
@@ -1480,7 +1381,7 @@ class ZPertMenu extends React.Component {
     );
 
     view_menu = (
-        <Menu onClick={handleClick}>
+        <Menu onClick={this.handleClick}>
             <Menu.Item style={this.menu_item_style} key="双代号网络图"><span>双代号网络图</span></Menu.Item>
             <Menu.Item style={this.menu_item_style} key="横道图"><span>横道图</span></Menu.Item>
             <Menu.Item style={this.menu_item_style} key="menu_increase_hor_ratio"><span>横向撑长</span></Menu.Item>
@@ -1491,7 +1392,7 @@ class ZPertMenu extends React.Component {
     );
 
     setting_menu = (
-        <Menu onClick={handleClick}>
+        <Menu onClick={this.handleClick}>
             <Menu.Item style={this.menu_item_style} key="menu_setupgeneral"><span>常规</span></Menu.Item>
             <Menu.Item style={this.menu_item_style} key="menu_setupcalendar"><span>日历</span></Menu.Item>
             <Menu.Item style={this.menu_item_style} key="menu_intelligentlayout"><span>智能调图</span></Menu.Item>
@@ -1499,26 +1400,301 @@ class ZPertMenu extends React.Component {
     );
 
     about_menu = (
-        <Menu onClick={handleClick}>
+        <Menu onClick={this.handleClick}>
             <Menu.Item style={this.menu_item_style} key="menu_zbra_website"><span>斑马进度官网</span></Menu.Item>
             <Menu.Item style={this.menu_item_style} key="menu_zbra_forum"><span>斑马进度论坛</span></Menu.Item>
         </Menu>
     );
 
+    onSetUpDataChange = e => {
+        var new_update_data = { ...this.state.update_data, ...e };
+        console.log('onSetUpDataChange', e);
+        this.setState({
+            update_data: new_update_data
+        });
+        console.log(new_update_data);
+    }
+    onSetupOk = e => {
+        console.log('ok', this.state.update_data);
+        this.state.setup_callback({ result: this.state.update_data });
+    }
+
+    initView() {
+        view_interface.initwasm({
+            call_back: {
+                updateMenu: (e) => {
+                    this.updateMenu(e);
+                }
+            },
+            writeToClipBoard: (jsonstr, datastr) => {
+                console.log(jsonstr, datastr);
+                this.setState({
+                    clipboard: jsonstr,
+                });
+            },
+            createSettingDialog: (data, index) => {
+                console.log('createdialog', data);
+                return new Promise((resolve, reject) => {
+                    this.setState({ setup_data: data });
+                    this.setState({ update_data: {} });
+                    this.setState({ setup_index: index + '' });
+                    document.getElementById('modalbutton').click();
+                    this.setState({ setup_callback: resolve });
+
+                    // showsetup(this.state.setup_data, this.state.setup_index); //自定义model
+                });
+            }
+        });
+        view_interface.setMessageBox(info);
+    }
+
+    updateMenu(info) {
+        if (info.edit_width) { this.setState({ hor_ratio: info.edit_width }); }
+        if (info.edit_height) { this.setState({ ver_height: info.edit_height }); }
+        if (info.collapsedbutton) { this.setState({ collapsed: info.collapsedbutton }); }
+        if (info.viewname) { console.log(info); this.setState({ cur_view: info.viewname }); }
+    }
+
+    componentDidMount() {
+        console.log('initview', this.state)
+        this.initView();
+
+        Mousetrap.bind('alt+shift+left', () => { this.OnUpGrade(); return false; },);
+        Mousetrap.bind('alt+shift+right', () => { this.OnDownGrade(); return false; },);
+        Mousetrap.bind('mod+alt+up', () => { this.OnMoveUp(); return false; },);
+        Mousetrap.bind('mod+alt+down', () => { this.OnMoveDown(); return false; },);
+        Mousetrap.bind('shift+alt+up', () => { this.OnGoOut(); return false; },);
+        Mousetrap.bind('shift+alt+down', () => { this.OnGoIn(); return false; },);
+        Mousetrap.bind('ctrl+w', () => { this.AddWork(); return false; });
+        Mousetrap.bind('ctrl+m', () => { this.AddMilestone(); return false; });
+        Mousetrap.bind('ctrl+z', () => { this.handleClick({ key: "menu_undo" }); return false; });
+        Mousetrap.bind('ctrl+y', () => { this.handleClick({ key: "menu_redo" }); return false; });
+        Mousetrap.bind('ctrl+c', () => { console.log('复制'); view_interface.onCopy(); return false; });
+        Mousetrap.bind('ctrl+v', () => {
+            console.log('粘贴', this.state.clipboard);
+            view_interface.onPaste(this.state.clipboard);
+            return false;
+        });
+        Mousetrap.bind('ctrl+1', () => { console.log('设置'); view_interface.getView().OnSetUp(1); return false; });
+        Mousetrap.bind('del', () => { view_interface.getView().OnDelete(); return false; });
+    }
+
+    onChangePertMode = (e) => {
+        this.handleClick(e);
+        this.setState({
+            pertMode: e.key
+        });
+    };
+
+    pert_mode_menu = (
+        <Menu onClick={this.onChangePertMode}>
+            <Menu.Item style={this.menu_item_style} key="双代号网络图"><span>双代号网络图</span></Menu.Item>
+            <Menu.Item style={this.menu_item_style} key="横道图"><span>横道图</span></Menu.Item>
+        </Menu>
+    );
+
+    onCollapsedTo = (e) => {
+        this.handleClick(e);
+    }
+    onCollapsed = (e) => {
+        view_interface.onCollapsed();
+    }
+
+    collapse_menu = (
+        <Menu onClick={this.onCollapsedTo}>
+            <Menu.Item key="menu_expandtoall">全部展开</Menu.Item>
+            <Menu.Item key="menu_expandto1">层级1</Menu.Item>
+            <Menu.Item key="menu_expandto2">层级2</Menu.Item>
+            <Menu.Item key="menu_expandto3">层级3</Menu.Item>
+            <Menu.Item key="menu_expandto4">层级4</Menu.Item>
+            <Menu.Item key="menu_expandto5">层级5</Menu.Item>
+            <Menu.Item key="menu_expandto6">层级6</Menu.Item>
+            <Menu.Item key="menu_expandto7">层级7</Menu.Item>
+            <Menu.Item key="menu_expandto8">层级8</Menu.Item>
+            <Menu.Item key="menu_expandto9">层级9</Menu.Item>
+        </Menu>
+    );
+    onSelectView = (e) => {
+        console.log(e);
+        this.setState({
+            cur_view: e.key
+        });
+        view_interface.getView().ApplyView(e.key);
+    }
+    HeartSvg = (props) => (
+        <>
+            <svg className="menu_icon" viewBox="0 0 64 64"> <use xlinkHref={`#icon-${props.iconClass}`} /> </svg>
+        </>
+    );
+
+    IconBtn = (props) => {
+        return (
+            <Tooltip placement="bottomLeft" title={props.title} color='white' mouseEnterDelay={0.005} mouseLeaveDelay={0.005}>
+                <Button
+                    disabled={(props.disabled != undefined) ? props.disabled : this.state.disabled}
+                    onClick={props.onClick}
+                    className="antd-my-btn"
+                >
+                    <this.HeartSvg iconClass={props.iconClass} />
+                    {this.state.is_show_btn_text ? props.content : " "}
+                </Button>
+                {/* <div className="antd-my-btn" style={{ display: "inline-block" }} onClick={props.onClick}>
+                    <this.HeartSvg iconClass={props.iconClass} />
+                    <span >{this.state.is_show_btn_text ? props.content : " "}</span>
+                </div> */}
+            </Tooltip>
+        );
+    }
+
+    BtnIcon = (props) => {
+        return (
+            <Tooltip placement="bottomLeft" title={props.title} color='white' mouseEnterDelay={0.005} mouseLeaveDelay={0.005}>
+                {/* <span>{props.content}</span>
+                <Button style={{ padding: 4 }} type="text" icon={<this.HeartSvg iconClass={props.iconClass} />} onClick={props.onClick}>{" "}</Button> */}
+                {/* <div className="antd-my-btn" style={{ display: "inline-block" }} onClick={props.onClick}>
+                    <span >{this.state.is_show_btn_text ? props.content : " "}</span>
+                    <this.HeartSvg iconClass={props.iconClass} />
+                </div> */}
+                <Button
+                    disabled={(props.disabled != undefined) ? props.disabled : this.state.disabled}
+                    onClick={props.onClick}
+                    className="antd-my-btn"
+                >
+                    {this.state.is_show_btn_text ? props.content : " "}
+                    <this.HeartSvg iconClass={props.iconClass} />
+                </Button>
+            </Tooltip>
+        );
+    }
+    ZButton = (props) => {
+        return (
+            <Button
+                style={props.style || {}}
+                type={props.tyle || "text"}
+                onClick={props.onClick}
+                disabled={(props.disabled != undefined) ? props.disabled : this.state.disabled}
+            >
+                {props.text}
+            </Button>
+        );
+    }
+
+    ZDropdown = (props) => {
+        return (
+            <Dropdown
+                overlay={props.overlay || (<Menu></Menu>)}
+                placement={props.placement || "bottomLeft"}
+                disabled={(props.disabled != undefined) ? props.disabled : this.state.disabled}
+            >
+                <Button style={props.btnstyle || { marginLeft: 8 }} type="text">
+                    {props.btntext ? props.btntext : undefined}{props.drawoutline ? <DownOutlined /> : <></>}
+                </Button>
+            </Dropdown>
+        );
+    }
+
+    OnUpGrade = () => { this.handleClick({ key: "menu_upgrade" }); }
+    OnDownGrade = () => { this.handleClick({ key: "menu_downgrade" }); }
+    OnGoIn = () => { this.handleClick({ key: "menu_goin" }); }
+    OnGoOut = () => { this.handleClick({ key: "menu_goout" }); }
+    OnMoveUp = () => { this.handleClick({ key: "menu_moveup" }); }
+    OnMoveDown = () => { this.handleClick({ key: "menu_movedown" }); }
+    AddWork = () => { this.handleClick({ key: "menu_addwork" }); }
+    AddMilestone = () => { this.handleClick({ key: "menu_addmilestone" }); }
+    OnCalendar = () => { this.handleClick({ key: "menu_setupcalendar" }); };
+    IntelligentLayout = () => { this.handleClick({ key: "menu_intelligentlayout" }); }
+    OnSetHorRatio = () => {
+        var value = this.state.hor_ratio;
+        if (value != '') {
+            this.setState({ hor_ratio: value });
+            view_interface.getView().SetHorRatio(parseFloat(value));
+        }
+
+    }
+    OnSetVerHeight = (value) => {
+        var value = this.state.ver_height;
+        if (value != '') {
+            if (parseInt(value) < 1)
+                this.setState({ ver_height: '1' });
+            else
+                this.setState({ ver_height: value });
+            view_interface.getView().SetVerHeight(Math.max(parseInt(value), 1));
+        }
+    }
+    OnPertLargeHorRatio = () => { this.handleClick({ key: "menu_increase_hor_ratio" }); }
+    OnPertSmallHorRatio = () => { this.handleClick({ key: "menu_decrease_hor_ratio" }); }
+    OnPertLargeVerRatio = () => { this.handleClick({ key: "menu_increase_ver_height" }); }
+    OnPertSmallVerRatio = () => { this.handleClick({ key: "menu_decrease_ver_height" }); }
+
 
     render() {
         return (
             <ConfigProvider locale={zhCN}>
-                <div className="App" >
-                    <Dropdown overlay={this.file_menu} placement="bottomLeft" trigger={['click']}><Button style={{ marginLeft: 8 }} type="text">文件</Button></Dropdown>
-                    <Dropdown overlay={this.eidt_menu} placement="bottomLeft" trigger={['click']}><Button style={{ marginLeft: 8 }} type="text">编辑</Button></Dropdown>
-                    <Dropdown overlay={this.operator_menu} placement="bottomLeft" trigger={['click']}><Button style={{ marginLeft: 8 }} type="text">大纲</Button></Dropdown>
-                    <Dropdown overlay={this.view_menu} placement="bottomLeft" trigger={['click']}><Button style={{ marginLeft: 8 }} type="text">显示</Button></Dropdown>
-                    <Dropdown overlay={this.setting_menu} placement="bottomLeft" trigger={['click']}><Button style={{ marginLeft: 8 }} type="text">设置</Button></Dropdown>
-                    <Dropdown overlay={this.about_menu} placement="bottomLeft" trigger={['click']}><Button style={{ marginLeft: 8 }} type="text">关于</Button></Dropdown>
-                    <br></br>
-                    <BtnGroup pertMode="双代号网络图"></BtnGroup>
-                </div >
+                <div className="zpert-header-toolbar" >
+                    <div className="zpert-header"  >
+                        <div >
+                            <this.ZDropdown overlay={this.file_menu()} btntext="文件" disabled={false} />
+                            <this.ZDropdown overlay={this.eidt_menu} btntext="编辑" />
+                            <this.ZDropdown overlay={this.operator_menu} btntext="大纲" />
+                            <this.ZDropdown overlay={this.view_menu} btntext="显示" />
+                            <this.ZDropdown overlay={this.setting_menu} btntext="设置" />
+                            <this.ZDropdown overlay={this.about_menu} btntext="关于" />
+                        </div>
+                    </div >
+                    <div className="zpert-toolbar"  >
+                        <div >
+                            <this.ZDropdown
+                                overlay={
+                                    <Menu onClick={this.onSelectView}>
+                                        {this.state.view_set.map(item => (
+                                            <Menu.Item key={item}>{item}</Menu.Item >
+                                        ))}
+                                    </Menu>}
+                                btnstyle={{ marginLeft: 8, padding: 4 }}
+                                btntext={this.state.cur_view}
+                                drawoutline
+                            />
+                            <this.ZDropdown overlay={this.pert_mode_menu} btnstyle={{ marginLeft: 8, padding: 4 }} btntext={this.state.pertMode} drawoutline />
+                            <Divider type="vertical" />
+                            <this.ZButton style={{ padding: 4 }} type="text" onClick={this.onCollapsed} text={this.state.collapsed} />
+                            <this.ZDropdown overlay={this.collapse_menu} btnstyle={{ padding: 4 }} drawoutline />
+
+                            <this.IconBtn iconClass="升级" title="升级(Ctrl+Shift+←)" content="升级" onClick={this.OnUpGrade} />
+                            <this.IconBtn iconClass="降级" title="降级(Ctrl+Shift+→)" content="降级" onClick={this.OnDownGrade} />
+                            <this.IconBtn iconClass="上钻" title="上钻(Shift+Alt+↑)" content="上钻" onClick={this.OnGoOut} />
+                            <this.IconBtn iconClass="下钻" title="下钻(Shift+Alt+↓)" content="下钻" onClick={this.OnGoIn} />
+                            <this.IconBtn iconClass="上移" title="上移(Ctrl+Alt+↑)" content="上移" onClick={this.OnMoveUp} />
+                            <this.IconBtn iconClass="下移" title="下移(Ctrl+Alt+↓)" content="下移" onClick={this.OnMoveDown} />
+                            <Divider type="vertical" />
+                            <this.IconBtn iconClass="添加工作" title="添加工作(Ctrl+W)" content="添加工作" onClick={this.AddWork} />
+                            <this.IconBtn iconClass="添加里程碑" title="添加里程碑(Ctrl+M)" content="添加里程碑" onClick={this.AddMilestone} />
+                            <Divider type="vertical" />
+                            <this.BtnIcon iconClass="宽度大" title="横向撑长网络" content="宽度" onClick={this.OnPertLargeHorRatio} />
+                            <NumericInput
+                                style={{ width: 50, height: 28, padding: 2 }}
+                                value={this.state.hor_ratio}
+                                onChange={(v) => { this.setState({ hor_ratio: v }); }}
+                                onBlur={this.OnSetHorRatio}
+                                disabled={this.state.disabled}
+                            />
+                            <this.IconBtn iconClass="宽度小" title="横向压缩网络" content=" " onClick={this.OnPertSmallHorRatio} />
+                            <this.BtnIcon iconClass="高度大" title="纵向撑长网络" content="高度" onClick={this.OnPertLargeVerRatio} />
+                            <NumericInput
+                                style={{ width: 50, height: 28, padding: 2 }}
+                                value={this.state.ver_height}
+                                onChange={(v) => { this.setState({ ver_height: v }); }}
+                                onBlur={this.OnSetVerHeight}
+                                disabled={this.state.disabled}
+                            />
+                            <this.IconBtn iconClass="高度小" title="纵向压缩网络" content=" " onClick={this.OnPertSmallVerRatio} />
+                            <Divider type="vertical" />
+                            <this.IconBtn iconClass="日历" title="日历设置" content="日历设置" onClick={this.OnCalendar} />
+                            <this.IconBtn iconClass="智能调图" title="智能调图" content="智能调图" onClick={this.IntelligentLayout} />
+                            <SetupPage value={this.state.setup_data} onChange={this.onSetUpDataChange} onOk={this.onSetupOk} tabindex={this.state.setup_index}></SetupPage>
+                        </div>
+                    </div>
+                </div>
+
             </ConfigProvider>);
     }
 }

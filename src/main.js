@@ -25,6 +25,8 @@ function createWindow() {
   // const appIcon = new Tray('src/resource/icon.png')
   // win.setIcon(appIcon)
 
+  win.webContents.send('workdir', app.getAppPath());
+
   ipcMain.on('savefileas', (e, msg) => {
     dialog.showSaveDialog({
       properties: ['另存为']
@@ -34,6 +36,15 @@ function createWindow() {
         win.webContents.send('savefile', result.filePath);
       }
     }).catch(err => { });
+  });
+
+  ipcMain.on('openfile', (e, msg) => {
+    console.log(e, msg);
+    win.webContents.send('workdir', app.getAppPath());
+  });
+
+  ipcMain.handle('getapppath', async (event, someArgument) => {
+    return app.getAppPath();
   });
 
   (function initMenu() {
