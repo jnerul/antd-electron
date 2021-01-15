@@ -1,4 +1,6 @@
 const { app, BrowserWindow, dialog, ipcMain, Menu, remote } = require('electron')
+const { clipboard } = require('electron')
+
 
 function createWindow() {
   // 创建浏览器窗口
@@ -27,20 +29,32 @@ function createWindow() {
 
   win.webContents.send('workdir', app.getAppPath());
 
-  ipcMain.on('savefileas', (e, msg) => {
-    dialog.showSaveDialog({
-      properties: ['另存为']
-    }).then(result => {
-      if (!result.canceled) {
-        // view_interface.saveFile(result.filePath);
-        win.webContents.send('savefile', result.filePath);
-      }
-    }).catch(err => { });
+
+  ipcMain.handle('savefileas', async (event, someArgument) => {
+    var filters = [];
+    filters.push(someArgument);
+    filters.push({ name: 'All Files', extensions: ['*'] });
+    return new Promise(function (resolve, reject) {
+      dialog.showSaveDialog({
+        properties: ['另存为'],
+        filters: filters
+      }).then(result => {
+        if (!result.canceled) {
+          resolve(result.filePath);
+        }
+      }).catch(err => { });
+    });
   });
 
   ipcMain.on('openfile', (e, msg) => {
-    console.log(e, msg);
     win.webContents.send('workdir', app.getAppPath());
+  });
+
+  ipcMain.on('writeclipboard', (e, msg) => {
+    if (msg)
+      clipboard.writeText(msg);
+    else
+      clipboard.clear();
   });
 
   ipcMain.handle('getapppath', async (event, someArgument) => {

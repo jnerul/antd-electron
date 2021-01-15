@@ -45,20 +45,19 @@ function initwasm(module) {
     exports.setUpdateMenu = setUpdateMenu;
 
 
-    function saveZpertFile(filepath) {
-        var fs = require("fs");
-        fs.writeFile(filepath, view.ToJson(), { encoding: 'utf8' }, function (err) {
-            if (err)
-                throw err;
-            console.log('保存成功');
-        })
-    }
+    // function saveZpertFile(filepath) {
+    //     var fs = require("fs");
+    //     fs.writeFile(filepath, view.ToJson(), { encoding: 'utf8' }, function (err) {
+    //         if (err)
+    //             throw err;
+    //         console.log('保存成功');
+    //     })
+    // }
 
     function get_view() {
         return view;
     }
 
-    exports.saveFile = saveZpertFile;
     exports.getView = get_view;
 
     ZWebViewInit({
@@ -218,6 +217,11 @@ function initwasm(module) {
         function onPaste(str) {
             view.OnPaste(str);
         }
+        function drawPdf(ctx) {
+            Module['setcontext'](ctx);
+            view.Draw();
+            Module['resetcontext']();
+        }
         console.log('init openFile');
         exports.openFile = openZpertFile;
         exports.newFile = newZpertFile;
@@ -229,6 +233,7 @@ function initwasm(module) {
         exports.onCollapsed = onCollapsed;
         exports.onCopy = onCopy;
         exports.onPaste = onPaste;
+        exports.drawPdf = drawPdf;
 
 
         document.onkeydown = function (event) {

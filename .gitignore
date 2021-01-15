@@ -1,2 +1,6 @@
 ﻿node_modules/
 out/
+src/js/wrender.js
+webpackdst/
+package-lock.json
+temp/

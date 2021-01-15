@@ -14,6 +14,9 @@ import moment from 'moment';
 import 'moment/locale/zh-cn';
 moment.locale('zh-cn');
 
+const { jsPDF } = require("jspdf");
+const path = require('path')
+const fs = require('fs');
 const os = require('os');
 console.log('os.arch:', os.arch());
 console.log('os.platform:', os.platform());
@@ -75,10 +78,6 @@ function ZMenuItem(props) { return (<Menu.Item style={{ lineHeight: "32px" }}></
 
 
 var { remote, shell, ipcRenderer } = require('electron');
-
-ipcRenderer.on('savefile', function (event, arg) {
-    view_interface.saveFile(arg);
-})
 
 ipcRenderer.on('workdir', function (event, arg) {
     console.log('workdir', arg);
@@ -1096,6 +1095,31 @@ class ZPertMenu extends React.Component {
         });
         view_interface.onClose();
     }
+    ratio = undefined
+    px2cm = (px) => {
+        if (this.ratio == undefined) {
+            var ratio = 0;
+            var div = document.createElement('div');
+            div.style.width = '1cm';
+            div.id = 'puc';
+            document.body.appendChild(div);
+            var w = getComputedStyle(div, null).width;
+            ratio = w.substr(0, w.length - 2);
+            console.log(ratio);
+            div.parentNode.removeChild(div);
+            this.ratio = ratio;
+        }
+        return px / this.ratio;
+    }
+
+    writetoclipboard = (str) => {
+        console.log(str);
+        if (str != undefined) {
+            ipcRenderer.send("writeclipboard", str);
+        } else {
+            ipcRenderer.send("writeclipboard", '');
+        }
+    }
 
     handleClick = (e) => {
         switch (e.key) {
@@ -1122,8 +1146,6 @@ class ZPertMenu extends React.Component {
                             return;
                         }
 
-                        const path = require('path')
-                        const fs = require('fs');
                         //7z.exe x b.zpet -p加密锁验证失败，程序将退出! -otemp
 
                         var open_path = file.path;
@@ -1162,61 +1184,96 @@ class ZPertMenu extends React.Component {
                 })();
                 break;
             case 'menu_save':
-                ipcRenderer.send("savefileas");
+                // ipcRenderer.send("savefileas");
                 break;
             case 'menu_saveas':
-                ipcRenderer.send("savefileas");
+                // ipcRenderer.send("savefileas");
+                ipcRenderer.invoke('savefileas').then((result) => {
+                    fs.writeFile(result, view_interface.getView().ToJson(), {}, function (err) {
+                        if (err)
+                            throw err;
+                        console.log('保存成功');
+                    })
+                })
                 break;
             case 'menu_export_img':
 
                 break;
             case 'menu_export_pdf':
+                // require('./jspdf.customfonts.min');
+                ipcRenderer.invoke('getapppath').then((result) => {
+                    var fontpath = path.join(result, 'src/resource/SourceHanSerifCN-Regular.ttf');
+
+                    fs.readFile(fontpath, "utf8", (err, data) => {
+                        if (err) {
+                            console.log('打开失败');
+                        } else {
+                            const myfont = data;
+                            const doc = new jsPDF();
+                            doc.deletePage(1);
+                            var size = view_interface.getView().GetDrawSize();
+                            doc.addPage([size[0], size[1]]);
+                            doc.addFileToVFS('MyFont.ttf', myfont);
+                            doc.addFont("MyFont.ttf", "MyFont", "normal");
+                            // doc.setFont("MyFont");
+                            // doc.addFont(fontpath, 'simsun', 'normal');
+                            // doc.setFont('simsun');
+                            var ctx = doc.context2d;
+                            // doc.text("Hello world!", 10, 10);
+                            view_interface.drawPdf(ctx);
+                            doc.save("a4.pdf");
+                        }
+                    })
+                });
                 break;
             case 'menu_export_excel':
-                const fs = require('fs');
                 const xlsx = require('better-xlsx');
                 const file = new xlsx.File();
-
                 const sheet = file.addSheet('Sheet1');
-                const row = sheet.addRow();
-                const cell = row.addCell();
 
-                cell.value = 'I am a cell!';
-                cell.hMerge = 2;
-                cell.vMerge = 1;
+                var json = JSON.parse(view_interface.getView().ToExcel());
+                var colwidth = json['colwidth'];
+                var rowheight = json['rowheight'];
 
-                const style = new xlsx.Style();
+                for (var i = 0; i < rowheight.length; i++) {
+                    const row = sheet.addRow();
+                    var h = this.px2cm(rowheight[i] * 4 / 3);
+                    console.log(h);
+                    row.setHeightCM(h);
+                    for (var j = 0; j < colwidth.length; j++) {
+                        var celldata = json['grids'][i][j];
+                        console.log(celldata['fontcolor'].toString(16));
+                        const cell = row.addCell();
+                        cell.value = celldata['showstring']
+                        cell.style.align.v = 'center';
+                        cell.style.font.color = '' + celldata['fontcolor'].toString(16)
+                    }
+                }
+                for (var i = 0; i < colwidth.length; i++) {
+                    sheet.col(i).width = colwidth[i] * 3 / 4;
+                }
 
-                style.fill.patternType = 'solid';
-                style.fill.fgColor = '00FF0000';
-                style.fill.bgColor = 'FF000000';
-                style.align.h = 'center';
-                style.align.v = 'center';
+                const JSZip = require("jszip");
+                var zip = new JSZip();
+                var parts = file.makeParts();
+                for (var _i = 0, _Object$keys = Object.keys(parts); _i < _Object$keys.length; _i++) {
+                    var key = _Object$keys[_i];
+                    zip.file(key, parts[key]);
+                }
+                var compression = 'STORE';
 
-                cell.style = style;
-
-                file
-                    .saveAs()
-                    .pipe(fs.createWriteStream('test.xlsx'))
-                    .on('finish', () => console.log('Done.'));
-                // var stream;
-                // file.saveAs('blob')
-                //     .then(function (blob) {
-                //         console.log(blob);
-
-                //         var reader = new FileReader();
-                //         reader.readAsText(blob, 'utf-8');
-                //         reader.onload = function (e) {
-                //             console.log(reader.result);
-                //             fs.writeFile('C:/Users/liyh-l/Desktop/test.xlsx', reader.result, { encoding: 'utf8'}, function (err) {
-                //                 if (err)
-                //                     throw err;
-                //                 console.log('保存成功');
-                //             })
-                //         }
-                //     });
-                // .pipe(stream)
-                // .on('finish', () => console.log('Done.', stream));
+                zip.generateAsync({
+                    type: 'nodebuffer',
+                    compression
+                }).then(function (data) {
+                    ipcRenderer.invoke('savefileas', { name: 'Excel 工作簿', extensions: ['xlsx'] }).then((result) => {
+                        fs.writeFile(result, data, {}, function (err) {
+                            if (err)
+                                throw err;
+                            console.log('保存成功');
+                        })
+                    })
+                });
                 break;
             case 'menu_print':
 
@@ -1427,7 +1484,7 @@ class ZPertMenu extends React.Component {
                 }
             },
             writeToClipBoard: (jsonstr, datastr) => {
-                console.log(jsonstr, datastr);
+                this.writetoclipboard(datastr);
                 this.setState({
                     clipboard: jsonstr,
                 });
