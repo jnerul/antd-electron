@@ -46,9 +46,9 @@ function createWindow() {
     });
   });
 
-  ipcMain.on('openfile', (e, msg) => {
-    win.webContents.send('workdir', app.getAppPath());
-  });
+  // ipcMain.on('openfile', (e, msg) => {
+  //   win.webContents.send('workdir', app.getAppPath());
+  // });
 
   ipcMain.on('writeclipboard', (e, msg) => {
     if (msg)

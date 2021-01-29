@@ -1,14 +1,7 @@
 
 
 var exports = {}
-
-// var pro = require("./data");
 var webinit = require('./zpert/a').ZWebViewInit;
-
-// import React from "react";
-// import ReactDOM from "react-dom";
-// import { Button, Select, Modal, DatePicker, Tabs } from "antd";
-// const { TabPane } = Tabs;
 
 
 
@@ -18,9 +11,6 @@ function ZWebViewInit(e) {
 
 function initwasm(module) {
     var images = new Array();
-    var cc = new Image();
-    cc.src = 'resource/icon.png';
-    images[0] = cc;
     var view = undefined;
     var is_read_only = false;
     function autosizeCanvas() {
@@ -43,16 +33,8 @@ function initwasm(module) {
     function setUpdateMenu(fun) { update_menu = fun; };
     exports.setMessageBox = setMessageBox;
     exports.setUpdateMenu = setUpdateMenu;
+    exports.autosizeCanvas = autosizeCanvas;
 
-
-    // function saveZpertFile(filepath) {
-    //     var fs = require("fs");
-    //     fs.writeFile(filepath, view.ToJson(), { encoding: 'utf8' }, function (err) {
-    //         if (err)
-    //             throw err;
-    //         console.log('保存成功');
-    //     })
-    // }
 
     function get_view() {
         return view;
@@ -72,9 +54,9 @@ function initwasm(module) {
             return images[idx];
         },
         initImage: function (str, idx) {
-            // console.log('initimage');
+            // console.log('initimage', str);
             var imgstr = "data:image/png;base64," + str;
-            cc = new Image();
+            var cc = new Image();
             cc.src = imgstr;
             images[idx] = cc;
         },
@@ -82,18 +64,9 @@ function initwasm(module) {
             images = [];
         },
         messageBox: function (text, type) {
+            // console.log(text);
             message_box(text, type);
             return;
-            console.log('mes:', text);
-            if (type == 0) {
-                zalert(text);
-                return 1;
-            } else if (type == 1) {
-                if (confirm(text))
-                    return 1;
-                else
-                    return 2;
-            }
         },
         getResPath: function () {
             return "resource";
@@ -118,12 +91,11 @@ function initwasm(module) {
             }
         },
     }).then(function (Module) {
-        // sendtocoeditclient = Module['sendtocoeditclient'];
         autosizeCanvas();
 
 
-        function opendata(data) {
-            view = Module.load(data, 3);
+        function opendata(data, image_size) {
+            view = Module.load(data, image_size || 3);
             view.SetReadOnly(false);
             is_read_only = false;
             view.Draw();
@@ -133,15 +105,39 @@ function initwasm(module) {
         function openZpertFile(filepath) {
             var fs = require("fs");
             return new Promise(function (resolve, reject) {
-                fs.readFile(filepath, "utf8", (err, data) => {
+                fs.readdir(filepath, (err, data) => {
+                    const path = require('path')
                     if (err) {
                         console.log('打开失败');
                     } else {
-                        console.log('打开成功');
-                        opendata(data);
-                        resolve();
+                        var image_size = 0;
+                        for (var f in data) {
+                            var fpath = path.join(filepath, data[f]);
+                            if (fs.statSync(fpath).isFile())
+                                image_size++;
+                        }
+                        for (var f in data) {
+                            if (data[f] == "attachments")
+                                continue;
+                            var fpath = path.join(filepath, data[f]);
+                            fs.readFile(fpath, (err, fdata) => {
+                                if (err) {
+                                    console.log('打开失败');
+                                } else {
+                                    if (fdata[0] == 123) {
+                                        opendata(fdata.toString('utf-8'), image_size - 1);
+                                        resolve();
+                                    } else {
+                                        //图片
+                                        var cc = new Image();
+                                        cc.src = "data:image/png;base64," + fdata.toString('base64');
+                                        images.push(cc);
+                                    }
+                                }
+                            })
+                        }
                     }
-                })
+                });
             });
         }
 
@@ -156,7 +152,7 @@ function initwasm(module) {
             Module.need_draw = false;
             var rect = document.getElementById('zweb_view').getBoundingClientRect();
             zwebview.SetDrawSize(rect.width, rect.height);
-            zwebview.CalcDrawPos();
+            zwebview.OnInit();
             zwebview.FitPage();
             zwebview.Draw();
             zwebview.SetReadOnly(false);
@@ -166,6 +162,7 @@ function initwasm(module) {
         function onClose() {
             Module.onclose();
             view = undefined;
+            images = [];
         }
 
         function expandTo(grade) {
@@ -217,10 +214,8 @@ function initwasm(module) {
         function onPaste(str) {
             view.OnPaste(str);
         }
-        function drawPdf(ctx) {
-            Module['setcontext'](ctx);
-            view.Draw();
-            Module['resetcontext']();
+        function print(ctx) {
+            Module['print'](ctx);
         }
         console.log('init openFile');
         exports.openFile = openZpertFile;
@@ -233,7 +228,7 @@ function initwasm(module) {
         exports.onCollapsed = onCollapsed;
         exports.onCopy = onCopy;
         exports.onPaste = onPaste;
-        exports.drawPdf = drawPdf;
+        exports.print = print;
 
 
         document.onkeydown = function (event) {
@@ -379,12 +374,7 @@ function initwasm(module) {
             // obj.addEventListener('touchend', onTouchend, false);
         }
         drap(document.getElementById('zweb_view'));
-
-
     });
-    window.onresize = function () {
-        autosizeCanvas();
-    }
 }
 
 

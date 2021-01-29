@@ -21,12 +21,30 @@ const os = require('os');
 console.log('os.arch:', os.arch());
 console.log('os.platform:', os.platform());
 
-// const info = (mes, type) => {
-//     message.info(mes);
-// };
-
 import { Tabs } from "antd";
 const { TabPane } = Tabs;
+
+
+const view_interface = require('./view').default.exports;
+console.log(view_interface);
+require('./mousetrap.min')
+require('./simsun-normal')
+
+
+import { Menu, Dropdown, Divider, Tooltip, Input, InputNumber, Checkbox, ConfigProvider, Form, Row, Col, Table } from 'antd';
+import { DownOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+    FileAddTwoTone,
+    FolderOpenTwoTone,
+    SaveTwoTone,
+    PrinterTwoTone,
+    CloseCircleTwoTone,
+} from '@ant-design/icons';
+const { SubMenu } = Menu;
+const { TextArea } = Input;
+import { SketchPicker } from 'react-color';
+import reactCSS from 'reactcss'
+import { pseudoRandomBytes, publicDecrypt } from "crypto";
 
 const info = (mes, type) => {
     if (type == 1) {
@@ -51,25 +69,10 @@ const info = (mes, type) => {
     }
 };
 
-const view_interface = require('./view').default.exports;
-console.log(view_interface);
-require('./mousetrap.min')
+// const info = (mes, type) => {
+//     message.info(mes);
+// };
 
-
-import { Menu, Dropdown, Divider, Tooltip, Input, InputNumber, Checkbox, ConfigProvider, Form, Row, Col, Table } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
-import {
-    FileAddTwoTone,
-    FolderOpenTwoTone,
-    SaveTwoTone,
-    PrinterTwoTone,
-    CloseCircleTwoTone,
-} from '@ant-design/icons';
-const { SubMenu } = Menu;
-const { TextArea } = Input;
-import { SketchPicker } from 'react-color';
-import reactCSS from 'reactcss'
-import { pseudoRandomBytes } from "crypto";
 
 {/* <Menu.Item style={{ marginLeft: 28, textAlign: "center", fontSize: '32px' }}><FileAddTwoTone style={{}} />新建</Menu.Item> */ }
 {/* <Menu.Item style={menu_item_style} icon={<FileAddTwoTone />}><FileAddTwoTone style={menu_item_icon_style} />新建</Menu.Item> */ }
@@ -79,14 +82,14 @@ function ZMenuItem(props) { return (<Menu.Item style={{ lineHeight: "32px" }}></
 
 var { remote, shell, ipcRenderer } = require('electron');
 
-ipcRenderer.on('workdir', function (event, arg) {
-    console.log('workdir', arg);
-})
+// ipcRenderer.on('workdir', function (event, arg) {
+//     // console.log('workdir', arg);
+// })
 
 function openUrl(url) {
-    shell.openExternal(url).then(function () { console.log('打开成功！'); }, function (reaseon) {
-        shell.openPath(url).then(function () { console.log('打开成功！') }, function (reason) {
-            console.log(reason);
+    shell.openExternal(url).then(function () { }, function (reaseon) {
+        shell.openPath(url).then(function () { }, function (reason) {
+            // console.log(reason);
         });
     });
 }
@@ -198,7 +201,7 @@ const EditableCell = ({
             toggleEdit();
             handleSave({ ...record, ...values });
         } catch (errInfo) {
-            console.log('Save failed:', errInfo);
+            // console.log('Save failed:', errInfo);
         }
     };
 
@@ -281,7 +284,7 @@ function CalendarSetup({ value = {}, onChange }) {
         }
     }
 
-    console.log('calendars', value);
+    // console.log('calendars', value);
     const [defaultid, setDefaultid] = useState(value.defaultid || 0);
     const [calendars, setCalendars] = useState(value.calendars || []);
     const [showcalendar, setShowCalendar] = useState(calendars.filter(function (k) { return k.id == defaultid; })[0] || {});
@@ -359,6 +362,22 @@ function CalendarSetup({ value = {}, onChange }) {
             j++;
         }
         onUpdateCalendar();
+    }
+
+    const GetWorkHour = e => {
+        var work_minutes_per_day = 0;
+        for (var k in showcalendar.work_periods)
+            work_minutes_per_day += (showcalendar.work_periods[k][1] - showcalendar.work_periods[k][0]);
+        return work_minutes_per_day * 1.0 / 3600;
+    }
+
+    const addWorkPeriod = e => {
+        if (showcalendar.work_periods.length >= 4)
+            return;
+        var work_period = [0, 0];
+        work_period.key = showcalendar.work_periods.length;
+        showcalendar.work_periods.push(work_period);
+        onUpdateCalendarPeriods();
     }
 
 
@@ -748,11 +767,11 @@ function CalendarSetup({ value = {}, onChange }) {
                         <div style={{ position: "absolute", top: "-14px", marginTop: 5, marginLeft: 8, lineHeight: 2, padding: "1px 4px", background: "#fff" }}>
                             休息日/阶段设置
                                         </div>
-                        <div >
+                        <div style={{ paddingBottom: 4 }}>
                             <Button type="primary" style={{ marginLeft: 8, paddingLeft: 8, paddingRight: 8 }} onClick={onNewVacation}>插入</Button>
-                            <Button type="primary" style={{ marginLeft: 8, paddingLeft: 8, paddingRight: 8 }} onClick={onNewVacation}>删除</Button>
-                            <Button type="primary" style={{ marginLeft: 8, paddingLeft: 8, paddingRight: 8 }} onClick={onNewVacation}>上移</Button>
-                            <Button type="primary" style={{ marginLeft: 8, paddingLeft: 8, paddingRight: 8 }} onClick={onNewVacation}>下移</Button>
+                            {/* <Button type="primary" style={{ marginLeft: 8, paddingLeft: 8, paddingRight: 8 }} onClick={onNewVacation}>删除</Button> */}
+                            {/* <Button type="primary" style={{ marginLeft: 8, paddingLeft: 8, paddingRight: 8 }} onClick={onNewVacation}>上移</Button> */}
+                            {/* <Button type="primary" style={{ marginLeft: 8, paddingLeft: 8, paddingRight: 8 }} onClick={onNewVacation}>下移</Button> */}
                         </div>
                         <div style={{ height: 200 }}>
                             <Table
@@ -763,7 +782,6 @@ function CalendarSetup({ value = {}, onChange }) {
                                 tableLayout="fixed"
                                 pagination={false}
                                 scroll={{ x: 500, y: 160 }}></Table>
-
                         </div>
                     </section>
                 </Col>
@@ -772,14 +790,21 @@ function CalendarSetup({ value = {}, onChange }) {
                         <div style={{ position: "absolute", top: "-14px", marginTop: 5, marginLeft: 8, lineHeight: 2, padding: "1px 4px", background: "#fff" }}>
                             工作时间设置
                                         </div>
-                        <div >
-                            <Input style={{ width: 50, marginLeft: 8, paddingLeft: 8, paddingRight: 8 }} ></Input>
-                            <span style={{ paddingLeft: 8 }}>小时</span>
+                        <div style={{ paddingBottom: 4 }}>
+                            <Input value={GetWorkHour()} style={{ width: 50, marginLeft: 8, paddingLeft: 8, paddingRight: 8 }} ></Input>
+                            <span style={{ paddingLeft: 2 }}>小时</span>
+                            <Button
+                                style={{ marginLeft: 8 }}
+                                type="dashed"
+                                shape="circle"
+                                onClick={() => addWorkPeriod()}
+                                icon={<PlusOutlined />}
+                            >
+                            </Button>
                         </div>
                         <div style={{ height: 200 }}>
                             <Table
                                 dataSource={perioddataSource}
-                                // dataSource={perioddataSource}
                                 columns={[
                                     {
                                         title: '开始',
@@ -797,7 +822,7 @@ function CalendarSetup({ value = {}, onChange }) {
                                                 children: <RangePicker
                                                     className="table_time_range_picker"
                                                     allowClear={false}
-                                                    value={[moment(`${record[0] / 60 / 60}-${record[0] / 60 % 60}`, 'HH:mm'), moment(`${record[1] / 60 / 60}-${record[1] / 60 % 60}`, 'HH:mm')]}
+                                                    value={[moment(`${record[0] / 60 / 60}:${record[0] / 60 % 60}`, 'HH:mm'), moment(`${record[1] / 60 / 60}:${record[1] / 60 % 60}`, 'HH:mm')]}
                                                     format='HH:mm'
                                                     onChange={onCalendarWorkPerStartChange}
                                                     bordered={false}
@@ -846,6 +871,11 @@ function CalendarSetup({ value = {}, onChange }) {
 }
 
 function GeneralSetUp({ value = {}, onChange, tabindex = "1" }) {
+    const [askstarttime, setAskStartTime] = useState(moment.unix(value.ask_start_time).utc().format('YYYY-MM-DD HH:mm'));
+    const [askstoptime, setAskStopTime] = useState(moment.unix(value.ask_stop_time).utc().format('YYYY-MM-DD HH:mm'));
+    const [askduration, setAskDuration] = useState({ number: value.askduration || 1, currency: value.durationunit || 0 });
+
+    const [form] = Form.useForm();
 
     const DurationInput = ({ value = {}, onChange }) => {
         const [number, setNumber] = useState(1);
@@ -859,10 +889,10 @@ function GeneralSetUp({ value = {}, onChange, tabindex = "1" }) {
             }
         };
         const onNumberChange = (e) => {
-            const newNumber = parseInt(e.target.value || 1, 10);
-            if (Number.isNaN(number)) {
-                return;
-            }
+            // console.log('numberchange:', e);
+            var newNumber = e;
+            if (newNumber == '-' || newNumber == null || newNumber == '')
+                newNumber = 0;
             if (!('number' in value)) {
                 setNumber(newNumber);
             }
@@ -881,14 +911,13 @@ function GeneralSetUp({ value = {}, onChange, tabindex = "1" }) {
         };
         return (
             <span>
-                <Input
-                    type="text"
-                    value={value.number || number}
+                <InputNumber
+                    value={value.number == undefined ? number : value.number}
                     onChange={onNumberChange}
                     style={{ width: 60, }}
                 />
                 <Select
-                    value={value.currency || currency}
+                    value={value.currency == undefined ? currency : value.currency}
                     style={{
                         width: 90,
                         margin: '0 8px',
@@ -902,9 +931,52 @@ function GeneralSetUp({ value = {}, onChange, tabindex = "1" }) {
             </span>
         );
     };
-    const onValuesChange = value => {
+    const onValuesChange = newvalue => {
+        // console.log('onvaluechange', newvalue);
+        if (newvalue.ask_start_time != undefined) {
+            var start_time = moment.utc(newvalue.ask_start_time).unix();
+            var stop_time = moment.utc(askstoptime).unix();
+            var duration = askduration.number * (askduration.currency === 0 ? 24 * 60 * 60 : (askduration.currency === 1 ? 60 * 60 : 60));
+
+            stop_time = start_time + duration;
+            var show_stop = moment.unix(stop_time).utc().format('YYYY-MM-DD HH:mm');
+            newvalue.ask_stop_time = show_stop;
+
+        } else if (newvalue.ask_stop_time != undefined) {
+            var start_time = moment.utc(askstarttime).unix();
+            var stop_time = moment.utc(newvalue.ask_stop_time).unix();
+            var duration = askduration.number * (askduration.currency === 0 ? 24 * 60 * 60 : (askduration.currency === 1 ? 60 * 60 : 60));
+
+            var num = (stop_time - start_time) / (askduration.currency === 0 ? 24 * 60 * 60 : (askduration.currency === 1 ? 60 * 60 : 60));
+            newvalue.askduration = { number: num, currency: askduration.currency }
+        } else if (newvalue.askduration != undefined) {
+            var start_time = moment.utc(askstarttime).unix();
+            var stop_time = moment.utc(askstoptime).unix();
+            var duration = newvalue.askduration.number * (newvalue.askduration.currency === 0 ? 24 * 60 * 60 : (newvalue.askduration.currency === 1 ? 60 * 60 : 60));
+
+            stop_time = start_time + duration;
+            var show_stop = moment.unix(stop_time).utc().format('YYYY-MM-DD HH:mm');
+            newvalue.ask_stop_time = show_stop;
+        }
+
         if (onChange) {
-            onChange(value);
+            if (newvalue.ask_start_time != undefined) {
+                setAskStartTime(newvalue.ask_start_time);
+                form.setFieldsValue({ ask_start_time: newvalue.ask_start_time });
+                newvalue.ask_start_time = moment.utc(newvalue.ask_start_time).unix();
+            }
+            if (newvalue.ask_stop_time != undefined) {
+                setAskStopTime(newvalue.ask_stop_time);
+                form.setFieldsValue({ ask_stop_time: newvalue.ask_stop_time });
+                newvalue.ask_stop_time = moment.utc(newvalue.ask_stop_time).unix();
+            }
+            if (newvalue.askduration != undefined) {
+                setAskDuration(newvalue.askduration);
+                form.setFieldsValue({ askduration: newvalue.askduration });
+                newvalue.durationunit = newvalue.askduration.currency;
+                newvalue.askduration = newvalue.askduration.number;
+            }
+            onChange(newvalue);
         }
     }
     return (
@@ -933,13 +1005,14 @@ function GeneralSetUp({ value = {}, onChange, tabindex = "1" }) {
                         </Form.Item>
                     </Form>
                     <Form
+                        form={form}
                         layout="inline"
                         name="basic"
                         initialValues={{
-                            ask_start_time: value.ask_start_time || '',
-                            ask_stop_time: value.ask_stop_time || '',
+                            ask_start_time: moment.unix(value.ask_start_time).utc().format('YYYY-MM-DD HH:mm'),
+                            ask_stop_time: moment.unix(value.ask_stop_time).utc().format('YYYY-MM-DD HH:mm'),
                             schedule: value.schedule || 0,
-                            askduration: { number: value.askduration || 1, currency: value.durationunit || 0 },
+                            askduration: { number: value.askduration, currency: value.durationunit || 0 },
                         }}
                         onValuesChange={onValuesChange}
                         validateTrigger={["onBlur", "onChange"]}
@@ -1007,7 +1080,6 @@ const SetupPage = ({ value = {}, onChange, onOk, tabindex = 1 }) => {
         }
     };
     const setupCancel = e => {
-        console.log('setupcancle');
         setVisible(false);
     };
     const onDataChange = e => {
@@ -1056,6 +1128,22 @@ function showsetup(value, index, onDataChange) {
     );
 }
 
+var font = '';
+ipcRenderer.invoke('getapppath').then((result) => {
+    var fontpath = path.join(result, 'src/resource/simsun.ttf');
+
+    fs.readFile(fontpath, 'base64', (err, data) => {
+        if (err) {
+            // console.log(data, '打开失败');
+        } else {
+            // console.log(data, data.toString(), typeof (data));
+            font = data.toString();
+            window.font = font;
+        }
+    })
+})
+
+
 class ZPertMenu extends React.Component {
     constructor(props) {
         super(props);
@@ -1079,7 +1167,7 @@ class ZPertMenu extends React.Component {
     }
 
     onFileOpen = () => {
-        console.log(view_interface);
+        // console.log(view_interface);
         this.setState({
             disabled: false,
         });
@@ -1105,7 +1193,7 @@ class ZPertMenu extends React.Component {
             document.body.appendChild(div);
             var w = getComputedStyle(div, null).width;
             ratio = w.substr(0, w.length - 2);
-            console.log(ratio);
+            // console.log(ratio);
             div.parentNode.removeChild(div);
             this.ratio = ratio;
         }
@@ -1113,7 +1201,7 @@ class ZPertMenu extends React.Component {
     }
 
     writetoclipboard = (str) => {
-        console.log(str);
+        // console.log(str);
         if (str != undefined) {
             ipcRenderer.send("writeclipboard", str);
         } else {
@@ -1136,6 +1224,7 @@ class ZPertMenu extends React.Component {
                         inputObj.setAttribute('id', 'my_inputObj');
                         inputObj.setAttribute('type', 'file');
                         inputObj.setAttribute("style", 'visibility:hidden');
+                        inputObj.setAttribute('accept', '.zpet');
                         document.body.appendChild(inputObj);
                     }
 
@@ -1150,7 +1239,7 @@ class ZPertMenu extends React.Component {
 
                         var open_path = file.path;
                         if (os.platform() === 'win32') {
-                            ipcRenderer.send("openfile");
+                            // ipcRenderer.send("openfile");
                             ipcRenderer.invoke('getapppath').then((result) => {
                                 var cmd = path.join(result, '7z/7z.exe');
                                 var outdir = path.join(result, 'temp');
@@ -1158,10 +1247,11 @@ class ZPertMenu extends React.Component {
                                     fs.rmdirSync(outdir, { recursive: true });
                                 }
                                 require('child_process').spawnSync(cmd, ['x', open_path, '-p加密锁验证失败，程序将退出!', '-o' + outdir]);
-                                open_path = path.join(outdir, '0000')
-                                if (!fs.existsSync(open_path)) {
-                                    open_path = path.join(outdir, 'zpet')
-                                }
+                                open_path = outdir;
+                                // open_path = path.join(outdir, '0000')
+                                // if (!fs.existsSync(open_path)) {
+                                //     open_path = path.join(outdir, 'zpet')
+                                // }
                                 view_interface.openFile(open_path).then(function () {
                                     onfileopen();
                                 });
@@ -1187,44 +1277,87 @@ class ZPertMenu extends React.Component {
                 // ipcRenderer.send("savefileas");
                 break;
             case 'menu_saveas':
-                // ipcRenderer.send("savefileas");
                 ipcRenderer.invoke('savefileas').then((result) => {
                     fs.writeFile(result, view_interface.getView().ToJson(), {}, function (err) {
                         if (err)
                             throw err;
-                        console.log('保存成功');
+                        // console.log('保存成功');
                     })
                 })
                 break;
             case 'menu_export_img':
+                var canvas = document.createElement('canvas');
+                var size = view_interface.getView().GetDrawSize();
+                canvas.width = size[0] + 79 * 2;
+                canvas.height = size[1] + 76 * 2;
 
+                var ctx = canvas.getContext('2d');
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                view_interface.print(ctx);
+
+                var data = canvas.toDataURL("image/jpg");
+                var arr = data.split(',');
+
+                ipcRenderer.invoke('savefileas', { name: '图片jpg', extensions: ['jpg'] }).then((result) => {
+                    fs.writeFile(result, arr[1], 'base64', function (err) {
+                        if (err)
+                            throw err;
+                        // console.log('保存成功');
+                    })
+                })
                 break;
             case 'menu_export_pdf':
-                // require('./jspdf.customfonts.min');
-                ipcRenderer.invoke('getapppath').then((result) => {
-                    var fontpath = path.join(result, 'src/resource/SourceHanSerifCN-Regular.ttf');
+                var size = view_interface.getView().GetDrawSize();
+                var type = (size[0] + 79 * 2) > (size[1] + 76 * 2) ? 'l' : 'p';
+                const doc = new jsPDF(type, 'mm', [size[0] + 79 * 2, size[1] + 76 * 2]);
+                // console.log('pdfsize:', size[0] + 79 * 2, size[1] + 76 * 2);
+                // doc.setPage(1);
+                // doc.addFileToVFS('simsun-normal.ttf', window.font);
+                // console.log('1');
+                // doc.addFont("simsun-normal.ttf", "simsun", "normal");
+                // console.log('2');
+                // doc.setFont("simsun");
+                // doc.addFont(fontpath, 'simsun', 'normal');
+                // doc.setFont('simsun');
 
-                    fs.readFile(fontpath, "utf8", (err, data) => {
-                        if (err) {
-                            console.log('打开失败');
-                        } else {
-                            const myfont = data;
-                            const doc = new jsPDF();
-                            doc.deletePage(1);
-                            var size = view_interface.getView().GetDrawSize();
-                            doc.addPage([size[0], size[1]]);
-                            doc.addFileToVFS('MyFont.ttf', myfont);
-                            doc.addFont("MyFont.ttf", "MyFont", "normal");
-                            // doc.setFont("MyFont");
-                            // doc.addFont(fontpath, 'simsun', 'normal');
-                            // doc.setFont('simsun');
-                            var ctx = doc.context2d;
-                            // doc.text("Hello world!", 10, 10);
-                            view_interface.drawPdf(ctx);
-                            doc.save("a4.pdf");
-                        }
-                    })
-                });
+
+                var ctx = doc.context2d;
+                Object.defineProperty(ctx, "setLineDash", {
+                    value: function (t) {
+                        ctx.pdf.setLineDash(t);
+                    }
+                })
+                Object.defineProperty(ctx, "measureText", {
+                    value: function (t) {
+                        if ("string" != typeof t) throw n.error("jsPDF.context2d.measureText: Invalid arguments", arguments), new Error("Invalid arguments passed to jsPDF.context2d.measureText");
+                        var e = ctx.pdf,
+                            r = ctx.pdf.internal.scaleFactor,
+                            i = e.internal.getFontSize(),
+                            a = e.getStringUnitWidth(t) * i / e.internal.scaleFactor,
+                            o = function (t) {
+                                var e = (t = t || {}).width || 0;
+                                return Object.defineProperty(this, "width", {
+                                    get: function () {
+                                        return e
+                                    }
+                                }), this
+                            };
+                        return new o({
+                            width: a
+                        })
+                    }
+                })
+
+
+                view_interface.print(ctx);
+
+                window.pdf = doc;
+                window.ctx = ctx;
+
+                doc.save("a4.pdf");
+
                 break;
             case 'menu_export_excel':
                 const xlsx = require('better-xlsx');
@@ -1238,15 +1371,17 @@ class ZPertMenu extends React.Component {
                 for (var i = 0; i < rowheight.length; i++) {
                     const row = sheet.addRow();
                     var h = this.px2cm(rowheight[i] * 4 / 3);
-                    console.log(h);
                     row.setHeightCM(h);
                     for (var j = 0; j < colwidth.length; j++) {
                         var celldata = json['grids'][i][j];
-                        console.log(celldata['fontcolor'].toString(16));
                         const cell = row.addCell();
                         cell.value = celldata['showstring']
                         cell.style.align.v = 'center';
-                        cell.style.font.color = '' + celldata['fontcolor'].toString(16)
+                        cell.style.font.color = '' + celldata['fontcolor'].toString(16);
+                        if (celldata.vmerge != undefined) {
+                            cell.vMerge = celldata.vmerge;
+                            cell.hMerge = celldata.hmerge;
+                        }
                     }
                 }
                 for (var i = 0; i < colwidth.length; i++) {
@@ -1270,12 +1405,44 @@ class ZPertMenu extends React.Component {
                         fs.writeFile(result, data, {}, function (err) {
                             if (err)
                                 throw err;
-                            console.log('保存成功');
+                            // console.log('保存成功');
                         })
                     })
                 });
                 break;
             case 'menu_print':
+                require('./jquery.jqprint-0.3');
+                require('./jquery-migrate-1.2.1.min');
+
+                var div = document.createElement('div');
+
+                var canvas = document.createElement('canvas');
+                var size = view_interface.getView().GetDrawSize();
+                canvas.width = size[0] + 79 * 2;
+                canvas.height = size[1] + 76 * 2;
+
+                var ctx = canvas.getContext('2d');
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                view_interface.print(ctx);
+
+                var image = document.createElement('img')
+                div.id = 'zpert_print_canvas';
+                image.src = canvas.toDataURL("image/png")
+                div.appendChild(image);
+                document.body.appendChild(div);
+
+                // var old_body = window.document.body.innerHTML;
+                // window.document.body.innerHTML = canvas.innerHTML;
+                // window.print();
+                // window.document.body.innerHTML = old_body; 
+
+                $("#zpert_print_canvas").jqprint();
+                // console.log('printend');
+                document.body.removeChild(div);
+                // var data = canvas.toDataURL("image/jpg");
+                // var arr = data.split(',');
 
                 break;
             case 'menu_close':
@@ -1465,14 +1632,14 @@ class ZPertMenu extends React.Component {
 
     onSetUpDataChange = e => {
         var new_update_data = { ...this.state.update_data, ...e };
-        console.log('onSetUpDataChange', e);
+        // console.log('onSetUpDataChange', e);
         this.setState({
             update_data: new_update_data
         });
-        console.log(new_update_data);
+        // console.log('new_update_data', new_update_data);
     }
     onSetupOk = e => {
-        console.log('ok', this.state.update_data);
+        // console.log('ok', this.state.update_data);
         this.state.setup_callback({ result: this.state.update_data });
     }
 
@@ -1490,7 +1657,7 @@ class ZPertMenu extends React.Component {
                 });
             },
             createSettingDialog: (data, index) => {
-                console.log('createdialog', data);
+                // console.log('createdialog', data);
                 return new Promise((resolve, reject) => {
                     this.setState({ setup_data: data });
                     this.setState({ update_data: {} });
@@ -1502,18 +1669,27 @@ class ZPertMenu extends React.Component {
                 });
             }
         });
+        const onresize = w => {
+            if (w < 1350)
+                this.setState({ is_show_btn_text: false });
+            else
+                this.setState({ is_show_btn_text: true });
+        }
         view_interface.setMessageBox(info);
+        window.onresize = function (e) {
+            onresize(document.documentElement.clientWidth);
+            view_interface.autosizeCanvas();
+        }
     }
 
     updateMenu(info) {
         if (info.edit_width) { this.setState({ hor_ratio: info.edit_width }); }
         if (info.edit_height) { this.setState({ ver_height: info.edit_height }); }
         if (info.collapsedbutton) { this.setState({ collapsed: info.collapsedbutton }); }
-        if (info.viewname) { console.log(info); this.setState({ cur_view: info.viewname }); }
+        if (info.viewname) { this.setState({ cur_view: info.viewname }); }
     }
 
     componentDidMount() {
-        console.log('initview', this.state)
         this.initView();
 
         Mousetrap.bind('alt+shift+left', () => { this.OnUpGrade(); return false; },);
@@ -1526,13 +1702,12 @@ class ZPertMenu extends React.Component {
         Mousetrap.bind('ctrl+m', () => { this.AddMilestone(); return false; });
         Mousetrap.bind('ctrl+z', () => { this.handleClick({ key: "menu_undo" }); return false; });
         Mousetrap.bind('ctrl+y', () => { this.handleClick({ key: "menu_redo" }); return false; });
-        Mousetrap.bind('ctrl+c', () => { console.log('复制'); view_interface.onCopy(); return false; });
+        Mousetrap.bind('ctrl+c', () => { view_interface.onCopy(); return false; });
         Mousetrap.bind('ctrl+v', () => {
-            console.log('粘贴', this.state.clipboard);
             view_interface.onPaste(this.state.clipboard);
             return false;
         });
-        Mousetrap.bind('ctrl+1', () => { console.log('设置'); view_interface.getView().OnSetUp(1); return false; });
+        Mousetrap.bind('ctrl+1', () => { view_interface.getView().OnSetUp(1); return false; });
         Mousetrap.bind('del', () => { view_interface.getView().OnDelete(); return false; });
     }
 
@@ -1572,7 +1747,6 @@ class ZPertMenu extends React.Component {
         </Menu>
     );
     onSelectView = (e) => {
-        console.log(e);
         this.setState({
             cur_view: e.key
         });
